@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- No network: the page may only load its own files and may not fetch anything. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'none'; object-src 'none'">
+  <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Health Log">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <title>Health Log</title>
+</head>
+<body>
+  <header class="top"><h1 id="title">Log</h1></header>
+
+  <main>
+    <section id="view-log" class="view">
+      <div id="grid" class="grid"></div>
+      <div id="tagrow" class="tagrow" hidden>
+        <div class="tagrow-head">
+          <span id="tagrow-label"></span>
+          <button id="tagrow-close" class="icon-btn" aria-label="Dismiss triggers">×</button>
+        </div>
+        <div id="tagrow-chips" class="chips"></div>
+      </div>
+      <button class="link-btn add-past">+ Add past entry</button>
+    </section>
+
+    <section id="view-history" class="view" hidden>
+      <button class="secondary add-past">+ Add past entry</button>
+      <div id="history"></div>
+    </section>
+
+    <section id="view-patterns" class="view" hidden>
+      <div id="patterns"></div>
+    </section>
+
+    <section id="view-settings" class="view" hidden>
+      <h2>Items</h2>
+      <div id="items-list" class="list"></div>
+      <form id="add-item" class="add-row">
+        <input name="name" placeholder="New item, e.g. Alcohol" required autocomplete="off">
+        <button class="primary">Add</button>
+      </form>
+      <p class="hint">Tip: log exposures (Alcohol, Bad sleep, Skipped meal…) as items too.
+        Patterns can then check which of them tend to come before a symptom.</p>
+
+      <h2>Trigger tags</h2>
+      <div id="tags-list" class="list"></div>
+      <form id="add-tag" class="add-row">
+        <input name="name" placeholder="New tag" required autocomplete="off">
+        <button class="primary">Add</button>
+      </form>
+
+      <h2>Data</h2>
+      <p id="backup-status"></p>
+      <div class="row">
+        <button id="export" class="primary">Export CSV</button>
+        <button id="import-btn" class="secondary">Import CSV</button>
+        <input type="file" id="import" accept=".csv,text/csv" hidden>
+      </div>
+      <p class="hint">Everything stays on this device. Export regularly: it is your backup.
+        Import merges and skips entries you already have.</p>
+      <p class="hint" id="storage-status"></p>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" hidden></div>
+
+  <nav class="tabs">
+    <button data-view="log" aria-current="page"><span aria-hidden="true">＋</span>Log</button>
+    <button data-view="history"><span aria-hidden="true">☰</span>History</button>
+    <button data-view="patterns"><span aria-hidden="true">▥</span>Patterns</button>
+    <button data-view="settings"><span aria-hidden="true">⚙︎</span>Settings</button>
+  </nav>
+
+  <dialog id="edit">
+    <form method="dialog">
+      <h2 id="edit-title">Edit entry</h2>
+      <label>Item <select id="f-item"></select></label>
+      <label>Date &amp; time <input type="datetime-local" id="f-ts" required></label>
+      <fieldset>
+        <legend>Triggers</legend>
+        <div id="f-tags" class="chips"></div>
+      </fieldset>
+      <label>Note <textarea id="f-note" rows="2"></textarea></label>
+      <div class="row">
+        <button type="button" id="f-delete" class="danger">Delete</button>
+        <span class="spacer"></span>
+        <button value="cancel" formnovalidate class="secondary">Cancel</button>
+        <button value="save" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
