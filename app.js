@@ -120,8 +120,8 @@ function chip(label, pressed, onToggle) {
 let toastTimer;
 function toast(msg, actions = []) {
   const t = $('#toast');
-  t.replaceChildren(h('span', {}, msg), ...actions.map(([label, fn]) =>
-    h('button', { onclick: () => { hideToast(); fn(); } }, label)));
+  t.replaceChildren(h('span', {}, msg), actions.length ? h('div', { class: 'toast-actions' }, actions.map(([label, fn]) =>
+    h('button', { onclick: () => { hideToast(); fn(); } }, label))) : null);
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, 6000);
@@ -343,7 +343,7 @@ function monthSummary(items, byItem) {
     const days = new Set(inMonth.map(eDay)).size;
     return [plural(days, 'day'), inMonth.length !== days ? h('small', {}, ` (${inMonth.length} logs)`) : null];
   };
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card table-wrap' },
     h('table', { class: 'summary' },
       h('thead', {}, h('tr', {}, h('th', {}, ''), h('th', {}, monthName(now)), h('th', {}, monthName(prev)))),
       h('tbody', {}, items.map(it => h('tr', {},
@@ -657,7 +657,7 @@ $('#tagrow-close').addEventListener('click', dismissTagRow);
 $('#tagrow-edit').addEventListener('click', () => {
   show('settings');
   $('#tags-heading').scrollIntoView();
-  scrollBy(0, -80); // clear the sticky header
+  scrollBy(0, -$('.top').offsetHeight - 8); // clear the sticky header (its height follows text size)
 });
 
 function renderAll() {
