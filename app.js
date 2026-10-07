@@ -8,7 +8,8 @@
  *   lastExport: ISO string | null
  */
 const KEY = 'healthlog.v1';
-const SEED_ITEMS = ['Headache', 'Cold sore', 'Inhaler'];
+// Offered on the first-launch picker; nothing is tracked until the person picks.
+const SUGGESTED_ITEMS = ['Headache', 'Migraine', 'Heartburn', 'Nausea', 'Back pain', 'Allergies', 'Anxiety', 'Low mood', 'Fatigue', 'Period'];
 const SEED_TAGS = ['Poor sleep', 'Stress', 'Alcohol', 'Period', 'Weather change', 'Sick', 'Other'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -22,8 +23,9 @@ function load() {
       return d;
     }
   } catch { /* fall through to a fresh store */ }
-  return { items: SEED_ITEMS.map(named), tags: SEED_TAGS.map(named), entries: [], lastExport: null };
+  return { items: [], tags: [], entries: [], lastExport: null };
 }
+const isNewDevice = (() => { try { return !localStorage.getItem(KEY); } catch { return false; } })();
 let db = load();
 const save = () => localStorage.setItem(KEY, JSON.stringify(db));
 
@@ -598,6 +600,7 @@ function importCSV(text) {
   }
   save();
   renderAll();
+  finishOnboarding?.();
   toast(`Imported ${added}` + (dupes ? `, ${dupes} already here` : '') + (bad ? `, ${bad} unreadable` : ''));
 }
 
@@ -610,7 +613,7 @@ $('#import').addEventListener('change', async ev => {
 });
 
 /* ---------- Navigation & wiring ---------- */
-const TITLES = { log: 'Log', history: 'History', patterns: 'Patterns', settings: 'Settings' };
+const TITLES = { log: 'Health Log', history: 'History', patterns: 'Patterns', settings: 'Settings', onboard: 'Health Log' };
 function show(view) {
   for (const b of document.querySelectorAll('.tabs button')) {
     if (b.dataset.view === view) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -642,7 +645,87 @@ addEventListener('storage', ev => {
   if (ev.key === KEY) location.reload(); // simplest way to pick up the new data everywhere
 });
 
+/* ---------- Onboarding ----------
+ * Shown when this device has no saved data. A link like ?track=Heartburn,Spicy+food
+ * pre-selects (or adds) items, so you can send family a ready-made setup.
+ */
+let finishOnboarding = null; // set while the first-launch picker is showing
+
+function onboard() {
+  const sameName = (a, b) => a.toLowerCase() === b.toLowerCase();
+  const pre = (new URLSearchParams(location.search).get('track') || '').split(',').map(cleanName).filter(Boolean);
+  const names = [...SUGGESTED_ITEMS];
+  for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
+  const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
+  const tags = new Set(SEED_TAGS);
+
+  const renderItems = () => {
+    $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
+      on ? picked.add(n) : picked.delete(n);
+      $('#ob-start').disabled = !picked.size;
+    })));
+    $('#ob-start').disabled = !picked.size;
+  };
+  renderItems();
+  $('#ob-tags').replaceChildren(...SEED_TAGS.map(t => chip(t, true, on => on ? tags.add(t) : tags.delete(t))));
+
+  $('#ob-add').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const v = cleanName(ev.target.elements.name.value);
+    if (!v) return;
+    const existing = names.find(n => sameName(n, v));
+    picked.add(existing || (names.push(v), v));
+    ev.target.reset();
+    renderItems();
+  });
+
+  // Mutate in place: the Settings add-forms hold references to these arrays.
+  const addTags = () => db.tags.push(...SEED_TAGS.filter(t => tags.has(t) && !db.tags.some(x => sameName(x.name, t))).map(named));
+  const done = () => {
+    addTags();
+    save();
+    finishOnboarding = null;
+    history.replaceState(null, '', location.pathname);
+    document.body.classList.remove('onboarding');
+    renderAll();
+    show('log');
+  };
+  $('#ob-start').addEventListener('click', () => {
+    db.items.push(...names.filter(n => picked.has(n)).map(named));
+    done();
+  });
+  // Restoring a backup: the CSV brings its own items, so finish once it has imported something.
+  $('#ob-import').addEventListener('click', () => $('#import').click());
+  finishOnboarding = () => { if (db.entries.length) done(); };
+
+  // iPhone Safari and the Home Screen app have separate storage: set up inside the installed app.
+  const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const installed = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  const needsInstall = iOS && !installed;
+  $('#install-hint').hidden = !needsInstall;
+  $('#picker').hidden = needsInstall;
+  $('#install-skip').addEventListener('click', () => { $('#install-hint').hidden = true; $('#picker').hidden = false; });
+
+  document.body.classList.add('onboarding');
+  show('onboard');
+}
+
+/* ---------- Delete all data ---------- */
+$('#wipe').addEventListener('click', () => {
+  const n = db.entries.length;
+  $('#wipe-detail').textContent = `This erases ${n} ${n === 1 ? 'entry' : 'entries'}, your items and your trigger tags. ` +
+    (n && !db.lastExport ? 'You have never exported a backup. ' : '') + 'It can’t be undone; export a CSV first if you might want them back.';
+  $('#wipe').hidden = true;
+  $('#wipe-confirm').hidden = false;
+});
+$('#wipe-no').addEventListener('click', () => { $('#wipe-confirm').hidden = true; $('#wipe').hidden = false; });
+$('#wipe-yes').addEventListener('click', () => {
+  try { localStorage.removeItem(KEY); localStorage.removeItem(UI_KEY); } catch { /* nothing to clear */ }
+  location.replace(location.pathname); // reloads into first-launch setup
+});
+
 renderAll();
+if (isNewDevice) onboard();
 
 // Ask the browser not to evict our data; report the result in Settings.
 navigator.storage?.persist?.().then(ok => {

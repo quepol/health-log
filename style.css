@@ -71,6 +71,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .secondary { background: var(--surface-2); border-color: transparent; }
 .danger { color: var(--danger); border-color: var(--danger); background: transparent; }
 .link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; padding: 0; margin-top: 1rem; }
+.danger-link { color: var(--danger); }
+.danger-solid { background: var(--danger); border-color: var(--danger); color: var(--bg); font-weight: 700; }
+.wipe { margin-top: .75rem; border-color: var(--danger); }
+.wipe p { margin: 0 0 .6rem; }
+.card > h2:first-child { margin-top: 0; }
+body.onboarding .tabs { display: none; }
+.ob-start { width: 100%; margin-top: 1.5rem; min-height: 56px; font-size: 1.1rem; }
 .icon-btn { min-width: 48px; padding: 0; font-size: 1.3rem; }
 .small { min-height: 44px; padding: 0 .75rem; font-size: .9rem; }
 .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
