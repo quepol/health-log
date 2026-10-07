@@ -59,6 +59,13 @@ const eTime = e => e.ts.slice(11, 16);
 const dayNum = k => Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) / 864e5;
 const numDay = n => new Date(n * 864e5).toISOString().slice(0, 10);
 const fmtDay = (k, opts) => new Date(k + 'T12:00').toLocaleDateString(undefined, opts);
+// An entry's wall-clock time in the phone's own style, e.g. "11:51 PM" or "23:51";
+// with withDate, "Aug 27, 11:51 PM" (plus the year if it isn't this year).
+const H24 = /^h2/.test(new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle || '');
+const fmtWhen = (e, withDate) => new Date(e.ts.slice(0, 16)).toLocaleString(undefined, {
+  hour: H24 ? '2-digit' : 'numeric', minute: '2-digit',
+  ...(withDate && { month: 'short', day: 'numeric', ...(e.ts.startsWith(todayKey().slice(0, 4)) ? {} : { year: 'numeric' }) }),
+});
 const today = () => dayNum(todayKey());
 
 /* ---------- Episodes ----------
@@ -195,7 +202,7 @@ function logNow(itemId) {
   lastLoggedId = e.id;
   gapAsk = missedDays(itemById(itemId));
   renderAll();
-  toast(`Logged ${itemById(itemId).name} · ${eTime(e)}`, [
+  toast(`Logged ${itemById(itemId).name} · ${fmtWhen(e)}`, [
     ['Undo', () => removeEntry(e.id)],
     ['Edit', () => openEdit(e.id)],
   ]);
@@ -300,7 +307,7 @@ $('#edit').addEventListener('close', () => {
   if (!editingId) db.entries.push(e);
   save();
   renderAll();
-  toast(editingId ? 'Saved' : `Added ${itemById(e.itemId).name} · ${eDay(e)} ${eTime(e)}`);
+  toast(editingId ? 'Saved' : `Added ${itemById(e.itemId).name} · ${fmtWhen(e, true)}`);
 });
 
 $('#f-delete').addEventListener('click', () => {
