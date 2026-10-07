@@ -237,6 +237,7 @@ dialog {
 }
 dialog::backdrop { background: rgba(0, 0, 0, .55); }
 dialog h2 { margin-top: 0; }
+dialog h2:focus { outline: none; }
 dialog label, dialog fieldset { display: block; margin-bottom: .9rem; font-weight: 600; }
 dialog label > * { margin-top: .3rem; font-weight: 400; }
 dialog fieldset { border: 0; padding: 0; }

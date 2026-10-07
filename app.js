@@ -281,6 +281,9 @@ function openEdit(id) {
   $('#f-delete').hidden = !e;
   $('#edit').returnValue = '';
   $('#edit').showModal();
+  // The dialog focuses its first field, and on iPhone a focused picker pops open. That suits
+  // adding (pick the item first) but not editing, where people should see the whole entry.
+  (e ? $('#edit-title') : $('#f-item')).focus();
 }
 
 $('#edit').addEventListener('close', () => {

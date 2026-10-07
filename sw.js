@@ -1,6 +1,6 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
 // Bump VERSION when files are added or removed.
-const VERSION = 'v12';
+const VERSION = 'v13';
 const CACHE = `healthlog-${VERSION}`;
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
