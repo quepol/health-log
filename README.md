@@ -1,46 +1,100 @@
 # Health Log
 
-A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: no build step, no dependencies, no backend, no network calls. All data stays in your browser's `localStorage` on the device you use it on.
+A one-tap health tracker: headaches, back pain, exercise, or anything else you want to keep an eye on. It's a static PWA written in plain HTML, CSS and JS: no build step, no dependencies, no backend, no accounts, no network calls. All data stays in `localStorage` on the phone you use it on.
 
-## What it does
+## How it works
 
-- **First launch:** on a device with no data, a one-screen setup asks **What do you want to keep track of?** It suggests Headache, Heartburn, Back pain and Exercise, and you can add your own. Below that are **details** you can attach after tapping a button: Stress and Poor sleep start selected, Dehydrated is one tap away, and you can add your own. On an iPhone in the browser it first asks you to add the app to the Home Screen and set it up from there.
+The app has two ideas:
 
-- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of details appears, which you can tap or ignore. That row also has an **Edit details** link to Settings. Each button shows how many days you've logged it this month, or the current run while one is going ("Day 3 · tap for today"). The last tile, **＋ Add new**, adds a button right there.
-- **History:** every entry, newest first. Tap one to change its button, date, time, details or note, or to delete it. The **+ Add past entry** button backdates an entry.
+- **Things you track** are buttons on the Log screen. Tap one when it happens. They can be symptoms (Headache), habits (Exercise), or anything else.
+- **Details** note what else was going on when you log something, like Stress or Poor sleep. They're optional and attach to that one log.
+
+### Screens
+
+- **Setup (first launch):** shown on a device with no data.
+  - **What do you want to keep track of?** suggests Headache, Back pain and Exercise. You can add your own.
+  - **Details you can add** suggests Stress, Poor sleep and Dehydrated. You can add your own.
+  - Nothing is pre-selected.
+  - **Moving from another phone?** imports a CSV backup instead.
+  - **iPhone browser:** opened in the browser on an iPhone, the app first explains what it is and shows 3 steps to add it to the Home Screen, because the Home Screen app keeps its own data.
+- **Log:**
+  - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
+  - **What else was going on?** then offers your details. Tap any that apply or ignore it; **Edit details** jumps to Settings.
+  - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
+  - **＋ Add new** adds a button right there. **+ Add past entry** backdates one.
+- **History:**
+  - Every entry, newest first.
+  - Tap one to change what it was, its date, time, details or note, or to delete it.
 - **Patterns:**
-  - Days per item this month and last month.
-  - Bars of **days** with each item (not taps), switchable between week (last 12), month (last 12) and year.
-  - For episode items: each flare-up with its dates and length, plus typical length, longest, typical time between episodes, and days since the last one.
-  - The most common details for each button.
-  - **What comes before it?** for each item, how often it was logged on or just before a symptom day, compared with how often it appears on any day.
-- **Settings:** add, rename, reorder and hide buttons and details (hidden ones leave the Log screen but keep their history), plus CSV export and import.
+  - Days this month and last month for each thing you track.
+  - Bar charts of **days** (not taps), switchable between Week, Month and Year.
+  - For anything that runs over several days, its episodes: dates, length, typical and longest, time between, and days since the last one.
+  - The most common details for each thing you track.
+  - **What tends to come before it?** compares what you track against each other.
+- **Settings:**
+  - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen, but past entries keep them.
+  - **Data**: Export CSV, Import CSV, and **Delete all data** (with a confirmation step).
 
 ### Episodes
 
-Every item is logged the same way: one tap. Patterns groups days in a row into **episodes**, so a 5-day cold sore shows up as one episode lasting 5 days. Headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for the inhaler, the log count works as a puff count.
+Patterns groups days in a row into **episodes**, so a 5-day cold sore shows up as one episode lasting 5 days, while headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for an inhaler, the log count works as a puff count.
 
-**If you log after missing one or two days**, the app asks whether it was still there. **Yes** fills in the missing days, marked "Filled in", so the episode stays whole. **No** keeps them as separate episodes. The app learns: once an item has 3 finished episodes that typically last one day (headaches, drinks), it stops asking about that item.
+**Missed days:** if you log after missing one or two days, the app asks whether it was still there.
+- **Yes** fills in the missing days, marked "Filled in", so the episode stays whole.
+- **No** keeps them as separate episodes.
+- It stops asking for anything that has 3 finished episodes that typically last one day, such as headaches.
 
-While an item has been logged for 2 or more days in a row, its button shows "Day 3 · tap for today". Items that have had multi-day runs get an episode list in Patterns, showing length, typical and longest duration, and time between episodes.
+### Details or a button?
 
-**What tends to come before it?** looks only at the **first day** of each episode. What happened on day 5 of an outbreak didn't cause it. Cold sores can lag their cause by several days, so try the ≤ 3 or ≤ 5 day windows for them.
+Details are only recorded alongside a log, so they show what comes up most often, not whether something comes *before* what you track.
 
-### Buttons or details?
+To test a hunch, make it a button instead (Exercise, Medicine, Late meal…) and tap it *every* time it happens, including on good days. **What tends to come before it?** then compares it against your baseline:
+- **`2.0×`** means it shows up beforehand twice as often as on a typical day.
+- **First days only:** it looks at the first day of each episode, since what happened on day 5 of an outbreak didn't cause it.
+- **Delayed effects:** for slow-onset things, try the ≤ 3 or ≤ 5 day windows.
+- **Correlation, not proof:** it needs a few weeks of data before it means much.
 
-Details only get recorded alongside a button tap, so they can't tell you whether "poor sleep" comes before headaches or is just common. For anything you suspect, make it a **button** (Exercise, Medicine, Late meal…) and tap it *every* time it happens, whether or not anything follows. **What tends to come before it?** in Patterns then compares against your baseline. A `2.0×` means it shows up beforehand twice as often as on a typical day. That is correlation, and you need a few weeks of data before it means much.
+## Accessibility and text size
+
+- **Text size:** follows the phone's setting. On iPhone that's **Settings → Display & Brightness → Text Size** (and **Accessibility → Larger Text**).
+- **Layout:** Log buttons stay two across, and Settings rows stay on one line, until a name genuinely doesn't fit. Then they reflow rather than clip or scroll sideways.
+- **Fixed sizes:** chart axis labels and the bottom tab bar cap their size so they always fit.
+- **Theme:** light and dark mode follow the system.
 
 ## Back up your data
 
-**Settings → Delete all data** erases everything on the device, after a confirmation step, and returns to the first-launch setup.
+Data lives only on the device, and browsers can clear website storage. Home Screen apps are mostly exempt, but Apple doesn't guarantee it.
+- **Export:** use **Settings → Export CSV** regularly. On iPhone it opens the share sheet so you can save to Files or iCloud Drive.
+- **Reminder:** the Settings tab shows an orange dot when a backup is overdue.
+- **Import:** importing the same file twice won't create duplicates.
 
-Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
+**CSV format:** `timestamp,item,tags,note`.
+- `item` is the thing you tracked, and `tags` are its details, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.
+- Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works and is read as the device's local time.
 
-CSV format: `timestamp,item,tags,note`. `item` is the button and `tags` are the details, separated by `;` (column names unchanged, so older backups still import). Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works on import and is read as the device's local time.
+## Sharing with family
+
+Everyone uses the same link on their own phone; each person's data stays on their phone. To pre-select what someone tracks, add `?track=` to the link:
+
+```
+https://<username>.github.io/<repo>/?track=Heartburn,Late+meal
+```
+
+Names that match a suggestion are pre-selected, and others are added as new ones. They can still change the selection before tapping **Start logging**.
+
+For the pre-selection to survive "Add to Home Screen", the icon has to keep the `?track=` part. The manifest leaves `start_url` unset so iOS keeps it, but this hasn't been verified on a real device. If it doesn't carry over, setup just opens with nothing selected.
+
+## Install on iPhone
+
+1. Open the link in Safari (or Chrome).
+2. Tap **Share** (bottom of the screen in Safari, top right in Chrome), then **Add to Home Screen**.
+3. Open **Health Log** from the Home Screen. It runs full-screen and works offline.
+
+Set it up and log from the Home Screen icon, not the browser tab: the two keep separate data.
 
 ## Run locally
 
-Any static file server works. The service worker requires `http://localhost` or HTTPS; opening the file directly with `file://` won't work offline.
+Any static file server works. The service worker needs `http://localhost` or HTTPS, so opening the file with `file://` won't work offline.
 
 ```sh
 cd health-log
@@ -48,46 +102,28 @@ python3 -m http.server 8000
 # open http://localhost:8000
 ```
 
-To try it on your phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`. Offline mode and installing need HTTPS, so for real phone use host it as described below.
+To try it on a phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`. Installing and offline mode need HTTPS, so for real use host it as below.
 
 ## Host free on GitHub Pages
 
-1. Push this repo to GitHub. Pages is free for public repos; private repos need a paid plan. The repo contains only code, and your health data never leaves your phone.
-2. On GitHub, go to **Settings → Pages → Build and deployment**, set **Source: Deploy from a branch**, pick your branch, folder `/ (root)`, and click **Save**.
+1. Push this repo to GitHub. Pages is free for public repos; private repos need a paid plan. The repo contains only code. Health data never leaves the phone.
+2. On GitHub, go to **Settings → Pages → Build and deployment**. Set **Source: Deploy from a branch**, then choose `main` and the `/ (root)` folder, and click **Save**.
 3. After a minute the app is live at `https://<username>.github.io/<repo>/`.
 
-All paths are relative, so the app works from a sub-path like that. Netlify Drop and Cloudflare Pages also work: drag the folder in.
-
-## Sharing with family
-
-Everyone uses the same link on their own phone, and each person's data stays on that phone. To pre-select what someone tracks, add `?track=` to the link, for example:
-
-```
-https://<username>.github.io/<repo>/?track=Heartburn,Spicy+food,Coffee
-```
-
-Names that match a suggestion get pre-selected; any others are added as their own items. They can still change the selection before tapping **Start logging**.
-
-The setup has to happen inside the Home Screen app, because iPhone keeps that app's data separate from Safari's. For the pre-selection to carry over, the Home Screen icon has to keep the link's `?track=` part. The manifest leaves `start_url` unset so that iOS keeps it, but this hasn't been verified on a real device. If it doesn't carry over, the setup screen simply opens with nothing selected.
-
-## Install on iPhone
-
-1. Open the Pages URL in **Safari**.
-2. Tap **Share → Add to Home Screen**.
-3. Launch it from the Home Screen icon. It opens full-screen and works offline.
-
-Note: the Home Screen app keeps its storage separate from the Safari tab. Log from the icon, not the browser tab.
+All paths are relative, so it works from a sub-path. Netlify Drop and Cloudflare Pages also work: drag the folder in.
 
 ## Updating
 
-The service worker serves the cached app instantly and fetches updates in the background. After you push a change, it takes effect the *second* time you open the app. If you add or remove files, update the `FILES` list in `sw.js` and bump `VERSION`.
+- **How updates arrive:** the app opens instantly from its saved copy, then checks for a new version (at launch and whenever it comes back to the foreground). If one arrives before you've touched anything, it reloads once to show it. If you've already started tapping, it waits until next time. iPhone sometimes resumes a recently used app instead of relaunching it; closing it from the app switcher forces a fresh launch.
+- **Cache version:** bump `VERSION` in `sw.js` with each release. A changed `sw.js` is how the app notices an update.
+- **Adding or removing files:** also update the `FILES` list in `sw.js`.
 
 ## Files
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Markup for all four screens and the edit dialog |
-| `style.css` | Styles; light/dark mode via `prefers-color-scheme`; all sizes in `rem`, so text follows the phone's text-size setting |
-| `app.js` | Storage, rendering, episodes, patterns and CSV (one file, about 600 lines) |
+| `index.html` | Markup for setup, the four screens and the edit sheet |
+| `style.css` | Styles. Light/dark via `prefers-color-scheme`; sizes in `rem` so text follows the system setting |
+| `app.js` | Storage, rendering, episodes, patterns, layout fitting and CSV (one file, about 800 lines) |
 | `sw.js` | Offline cache |
 | `manifest.webmanifest`, `*.png` | Install metadata and icons |

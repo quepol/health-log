@@ -9,9 +9,7 @@
  */
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
-// Of the trigger tags, only these start selected: a short list is less daunting.
-const STARTER_TAGS = ['Stress', 'Poor sleep'];
-const SUGGESTED_ITEMS = ['Headache', 'Heartburn', 'Back pain', 'Exercise'];
+const SUGGESTED_ITEMS = ['Headache', 'Back pain', 'Exercise'];
 const SEED_TAGS = ['Stress', 'Poor sleep', 'Dehydrated'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -213,7 +211,7 @@ function renderTagRow() {
   const tags = active(db.tags);
   $('#tagrow').hidden = !e || !tags.length;
   if ($('#tagrow').hidden) return;
-  $('#tagrow-label').textContent = `Add details to ${itemById(e.itemId).name}?`;
+  $('#tagrow-label').textContent = 'What else was going on?';
   $('#tagrow-chips').replaceChildren(...tags.map(t => chip(t.name, e.tagIds.includes(t.id), on => {
     e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
     save();
@@ -732,7 +730,7 @@ function onboard() {
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
   const tagNames = [...SEED_TAGS];
-  const tags = new Set(STARTER_TAGS);
+  const tags = new Set(); // nothing pre-selected, same as the buttons above
 
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
@@ -821,4 +819,25 @@ navigator.storage?.persist?.().then(ok => {
   $('#storage-status').textContent = ok ? 'Storage is marked persistent.' : 'Browser may clear storage under pressure: export regularly.';
 }).catch(() => {});
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+/* Updates: the app opens instantly from its saved copy and checks for a new version at launch
+ * and whenever it comes back to the foreground. If one arrives before the person has touched
+ * anything (within 10 seconds), reload once to show it; otherwise it applies next time. */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  const sw = navigator.serviceWorker;
+  const hadController = !!sw.controller; // first-ever visit: installing isn't an update
+  let shownAt = Date.now(), touched = false;
+  addEventListener('pointerdown', () => { touched = true; }, true);
+  addEventListener('keydown', () => { touched = true; }, true);
+  sw.addEventListener('controllerchange', () => {
+    if (hadController && !touched && Date.now() - shownAt < 10000) location.reload();
+  });
+  sw.register('sw.js').then(reg => {
+    reg.update().catch(() => {}); // register() alone doesn't re-check an existing worker
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      shownAt = Date.now();
+      touched = false;
+      reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+}
