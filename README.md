@@ -12,18 +12,17 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
   - For episode items: each flare-up with its dates and length, plus typical length, longest, typical time between episodes, and days since the last one.
   - The most frequent tags for each item.
   - **What comes before it?** for each item, how often it was logged on or just before a symptom day, compared with how often it appears on any day.
-- **Settings:** add, rename, reorder and archive items and tags, choose how each item is tracked, and export or import CSV.
+- **Settings:** add, rename, reorder and archive items and tags, plus CSV export and import.
 
-### Count days vs Episodes
+### Episodes
 
-Each item is tracked in one of two ways, chosen in Settings:
+Every item is logged the same way: one tap. Patterns groups days in a row into **episodes**, so a 5-day cold sore shows up as one episode lasting 5 days. Headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for the inhaler, the log count works as a puff count.
 
-- **Count days** suits things that come and go within a day, like a headache.
-- **Episodes** suits flare-ups that last several days, like a cold sore or a run of inhaler use. Tap the item **once each day it's there**; days in a row are grouped into one episode automatically. If you log after missing one or two days, the app asks whether you forgot. **Yes** fills in the missing days, marked "Filled in", so the episode stays whole. **No** keeps them as separate episodes. Multiple taps on one day are fine; for the inhaler, the log count works as a puff count.
+**If you log after missing one or two days**, the app asks whether it was still there. **Yes** fills in the missing days, marked "Filled in", so the episode stays whole. **No** keeps them as separate episodes. The app learns: once an item has 3 finished episodes that typically last one day (headaches, drinks), it stops asking about that item.
 
-Cold sore and Inhaler start as Episodes, and new items start as Count days.
+While an item has been logged for 2 or more days in a row, its button shows "Day 3 · tap for today". Items that have had multi-day runs get an episode list in Patterns, showing length, typical and longest duration, and time between episodes.
 
-For Episodes items, **What comes before it?** looks only at the **first day** of each episode. Exposures during day 5 of an outbreak aren't triggers. Cold sores can lag their trigger by several days, so try the ≤ 3 or ≤ 5 day windows for them.
+**What comes before it?** looks only at the **first day** of each episode. Exposures during day 5 of an outbreak aren't triggers. Cold sores can lag their trigger by several days, so try the ≤ 3 or ≤ 5 day windows for them.
 
 ### Getting real trigger signal
 
@@ -32,8 +31,6 @@ Tags only get recorded on symptom days. Tags therefore can't tell you whether "p
 ## Back up your data
 
 Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
-
-The Count/Episodes setting isn't in the CSV. After restoring to a new device, set them again in Settings.
 
 CSV format: `timestamp,item,tags,note`. Tags are separated by `;`. Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works on import and is read as the device's local time.
 

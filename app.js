@@ -2,8 +2,7 @@
 
 /* ---------- Storage ----------
  * One JSON blob in localStorage:
- *   items:   [{ id, name, archived, mode }]      (array order = display order)
- *            mode: 'count' (e.g. headache) or 'episodes' (multi-day, e.g. cold sore)
+ *   items:   [{ id, name, archived }]            (array order = display order)
  *   tags:    [{ id, name, archived }]
  *   entries: [{ id, itemId, ts, tagIds, note }]  (ts = local ISO with UTC offset)
  *   lastExport: ISO string | null
@@ -13,20 +12,17 @@ const SEED_ITEMS = ['Headache', 'Cold sore', 'Inhaler'];
 const SEED_TAGS = ['Poor sleep', 'Stress', 'Alcohol', 'Period', 'Weather change', 'Sick', 'Other'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const EPISODIC = ['cold sore', 'inhaler']; // sensible defaults for these names
 const named = name => ({ id: uid(), name, archived: false });
-const defaultMode = name => EPISODIC.includes(name.toLowerCase()) ? 'episodes' : 'count';
-const newItem = name => ({ ...named(name), mode: defaultMode(name) });
 
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
     if (d && Array.isArray(d.items)) {
-      for (const it of d.items) { it.mode ??= defaultMode(it.name); delete it.gap; } // older versions
+      for (const it of d.items) { delete it.mode; delete it.gap; } // fields from older versions
       return d;
     }
   } catch { /* fall through to a fresh store */ }
-  return { items: SEED_ITEMS.map(newItem), tags: SEED_TAGS.map(named), entries: [], lastExport: null };
+  return { items: SEED_ITEMS.map(named), tags: SEED_TAGS.map(named), entries: [], lastExport: null };
 }
 let db = load();
 const save = () => localStorage.setItem(KEY, JSON.stringify(db));
@@ -62,8 +58,9 @@ const fmtDay = (k, opts) => new Date(k + 'T12:00').toLocaleDateString(undefined,
 const today = () => dayNum(todayKey());
 
 /* ---------- Episodes ----------
- * Runs of consecutive logged days of one item, oldest first. A missed day splits a run;
- * logging after one is caught by the "Did you forget?" prompt on the Log screen.
+ * Every item's logs are grouped into runs of consecutive days, oldest first. A headache is
+ * usually a run of one day; a cold sore a run of several. A missed day splits a run, which
+ * the "Was it still there?" prompt on the Log screen catches.
  */
 function episodesOf(it) {
   const days = new Map(); // dayNum -> { logs, tagIds }
@@ -135,16 +132,12 @@ function renderLog() {
   const month = todayKey().slice(0, 7);
   const items = active(db.items);
   $('#grid').replaceChildren(...items.map(it => {
-    let sub, ongoing = false;
-    if (it.mode === 'episodes') {
-      const last = episodesOf(it).at(-1);
-      ongoing = isOngoing(last);
-      sub = ongoing ? `Day ${today() - last.start + 1} · ${last.end === today() ? 'logged today' : 'tap for today'}`
-        : last ? `Last ended ${plural(today() - last.end, 'day')} ago` : 'No episodes yet';
-    } else {
-      const days = new Set(db.entries.filter(e => e.itemId === it.id && e.ts.startsWith(month)).map(eDay)).size;
-      sub = `${plural(days, 'day')} this month`;
-    }
+    // Mid-run (2+ days in a row up to today/yesterday): show the day count as a reminder.
+    const last = episodesOf(it).at(-1);
+    const ongoing = isOngoing(last) && epLength(last) >= 2;
+    const days = new Set(db.entries.filter(e => e.itemId === it.id && e.ts.startsWith(month)).map(eDay)).size;
+    const sub = ongoing ? `Day ${today() - last.start + 1} · ${last.end === today() ? 'logged today' : 'tap for today'}`
+      : `${plural(days, 'day')} this month`;
     return h('button', { class: 'log-btn' + (ongoing ? ' ongoing' : ''), onclick: () => logNow(it.id) },
       h('span', {}, it.name),
       h('span', { class: 'sub' }, sub));
@@ -179,10 +172,13 @@ function renderTagRow() {
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
 
-// First episode log of today after a 1–2 day gap: those days may just have been forgotten.
+// First log of today after a 1–2 day gap: those days may just have been forgotten.
+// Learned per item: once it has 3+ finished episodes that typically last one day
+// (headaches, a drink), it has shown it doesn't run for days, so stop asking.
 function missedDays(it) {
-  if (it.mode !== 'episodes') return null;
   const t = today();
+  const done = episodesOf(it).filter(ep => ep.end < t);
+  if (done.length >= 3 && median(done.map(epLength)) === 1) return null;
   const mine = db.entries.filter(e => e.itemId === it.id).map(e => dayNum(eDay(e)));
   if (mine.filter(n => n === t).length > 1) return null; // already asked at today's first log
   const days = new Set(mine);
@@ -385,7 +381,7 @@ function itemCard(it, entries) {
   return h('div', { class: 'card' },
     h('h3', {}, `${it.name} · days per ${scale}`),
     bars,
-    it.mode === 'episodes' && episodeSection(it),
+    episodeSection(it),
     h('strong', {}, 'Most tagged triggers'),
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
@@ -400,7 +396,7 @@ const median = xs => {
 
 function episodeSection(it) {
   const eps = episodesOf(it);
-  if (!eps.length) return null;
+  if (!eps.some(ep => epLength(ep) > 1)) return null; // never runs for days: nothing to show
   const last = eps.at(-1), ongoing = isOngoing(last);
   const done = ongoing ? eps.slice(0, -1) : eps; // an open episode's length isn't known yet
   const between = eps.slice(1).map((ep, i) => ep.start - eps[i].end - 1);
@@ -427,8 +423,8 @@ function episodeSection(it) {
 }
 
 /* "What comes before it?": for each other item, how often it was logged in the window before
- * a symptom day, compared with how often it was logged before any day at all. For episode items
- * only the first day of each episode counts: what happened on day 5 of a cold sore isn't a trigger. */
+ * a symptom episode started, compared with how often it was logged before any day at all.
+ * Only each episode's first day counts: what happened on day 5 of a cold sore isn't a trigger. */
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
@@ -443,9 +439,7 @@ function precedeCard(items) {
   const total = t - start + 1;
   const daysOf = id => new Set(db.entries.filter(e => e.itemId === id).map(e => dayNum(eDay(e))));
   const sym = itemById(precede.symptomId);
-  const episodic = sym.mode === 'episodes';
-  const symptomDays = (episodic ? episodesOf(sym).map(ep => ep.start) : [...daysOf(sym.id)])
-    .filter(n => n >= start && n <= t);
+  const symptomDays = episodesOf(sym).map(ep => ep.start).filter(n => n >= start && n <= t);
 
   const rows = withData.filter(it => it.id !== sym.id).map(it => {
     const ex = daysOf(it.id);
@@ -457,7 +451,7 @@ function precedeCard(items) {
     return { it, hit, pS, pB, lift: pB ? pS / pB : 0 };
   }).sort((a, b) => b.lift - a.lift);
 
-  const unit = episodic ? `${sym.name} episode` : `${sym.name} day`;
+  const unit = `${sym.name} episode`;
   const pct = x => `${Math.round(x * 100)}%`;
   const enough = symptomDays.length >= 5;
 
@@ -470,7 +464,7 @@ function precedeCard(items) {
         [[0, 'Same day'], [1, '≤ 1 day before'], [2, '≤ 2 days before'], [3, '≤ 3 days before'], [5, '≤ 5 days before']]
           .map(([v, l]) => h('option', { value: v, selected: v === precede.window }, l)))),
     h('p', { class: 'hint' }, `${plural(symptomDays.length, unit)} over the last ${plural(total, 'day')}` +
-      (episodic ? ', counting each episode’s first day.' : '.') + (enough ? '' : ' Too few to read much into yet.')),
+      '. Days in a row count once, from the first day.' + (enough ? '' : ' Too few to read much into yet.')),
     rows.map(r => h('div', { class: 'precede-row' + (enough && r.hit >= 3 && r.lift >= 1.5 ? ' strong' : '') },
       h('div', {}, h('strong', {}, r.it.name), ' ', h('span', { class: 'lift' }, r.pB ? `${r.lift.toFixed(1)}×` : '–')),
       h('div', { class: 'meta' }, `Before ${pct(r.pS)} of ${unit}s (${r.hit}/${symptomDays.length}) vs ${pct(r.pB)} of all days`))),
@@ -483,7 +477,7 @@ function precedeCard(items) {
 const cleanName = s => s.replace(/;/g, ',').trim(); // ';' separates tags in the CSV
 const nameTaken = (list, name, self) => list.some(x => x !== self && x.name.toLowerCase() === name.toLowerCase());
 
-function renderList(list, el, extra) {
+function renderList(list, el) {
   el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
     h('input', {
       value: x.name, 'aria-label': 'Name',
@@ -494,17 +488,9 @@ function renderList(list, el, extra) {
     }),
     h('button', { class: 'icon-btn', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
     h('button', { class: 'icon-btn', 'aria-label': 'Move down', disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'),
-    extra?.(x))));
+    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'))));
 }
 
-// Second line of an item row: how to track it.
-function itemOptions(it) {
-  return h('div', { class: 'list-sub' },
-    h('select', { 'aria-label': `How to track ${it.name}`, onchange: ev => { it.mode = ev.target.value; save(); renderAll(); } },
-      [['count', 'Count days'], ['episodes', 'Episodes (several days in a row)']]
-        .map(([v, l]) => h('option', { value: v, selected: it.mode === v }, l))));
-}
 function move(list, i, d) {
   [list[i], list[i + d]] = [list[i + d], list[i]];
   save();
@@ -522,11 +508,11 @@ function bindAdd(form, list, make) {
     renderAll();
   });
 }
-bindAdd($('#add-item'), db.items, newItem);
+bindAdd($('#add-item'), db.items, named);
 bindAdd($('#add-tag'), db.tags, named);
 
 function renderSettings() {
-  renderList(db.items, $('#items-list'), itemOptions);
+  renderList(db.items, $('#items-list'));
   renderList(db.tags, $('#tags-list'));
   const days = db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
   // Nag only once there's something worth losing: 30 days since the last export,
@@ -602,7 +588,7 @@ function importCSV(text) {
     // Accept "2026-10-06 14:32" (e.g. after a spreadsheet round-trip): treat as this device's local time.
     if (!/[+-]\d\d:\d\d$|Z$/.test(ts)) ts = isNaN(new Date(ts.replace(' ', 'T'))) ? '' : isoLocal(new Date(ts.replace(' ', 'T')));
     if (!ts || isNaN(Date.parse(ts)) || !itemName) { bad++; continue; }
-    const item = findOrCreate(db.items, itemName, newItem);
+    const item = findOrCreate(db.items, itemName, named);
     const key = `${Date.parse(ts)}|${item.id}`;
     if (seen.has(key)) { dupes++; continue; }
     seen.add(key);

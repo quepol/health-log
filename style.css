@@ -179,9 +179,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .controls { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .5rem; }
 
 /* Settings */
-.list-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: .9rem; }
-.list-sub { flex-basis: 100%; display: flex; gap: .4rem; }
-.list-sub select { flex: 1; min-width: 0; min-height: 44px; font-size: .9rem; }
+.list-row { display: flex; gap: .4rem; align-items: center; margin-bottom: .4rem; }
 .list-row input { flex: 1; min-width: 0; }
 .list-row.archived input { color: var(--muted); text-decoration: line-through; }
 input, select, textarea {
