@@ -2,7 +2,9 @@
 
 /* ---------- Storage ----------
  * One JSON blob in localStorage:
- *   items:   [{ id, name, archived }]            (array order = display order)
+ *   items:   [{ id, name, archived, mode, gap }]  (array order = display order)
+ *            mode: 'count' (e.g. headache) or 'episodes' (multi-day, e.g. cold sore);
+ *            gap: days without a log still counted as the same episode
  *   tags:    [{ id, name, archived }]
  *   entries: [{ id, itemId, ts, tagIds, note }]  (ts = local ISO with UTC offset)
  *   lastExport: ISO string | null
@@ -12,14 +14,20 @@ const SEED_ITEMS = ['Headache', 'Cold sore', 'Inhaler'];
 const SEED_TAGS = ['Poor sleep', 'Stress', 'Alcohol', 'Period', 'Weather change', 'Sick', 'Other'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const EPISODIC = ['cold sore', 'inhaler']; // sensible defaults for these names
 const named = name => ({ id: uid(), name, archived: false });
+const defaultMode = name => EPISODIC.includes(name.toLowerCase()) ? 'episodes' : 'count';
+const newItem = name => ({ ...named(name), mode: defaultMode(name), gap: 1 });
 
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
-    if (d && Array.isArray(d.items)) return d;
+    if (d && Array.isArray(d.items)) {
+      for (const it of d.items) { it.mode ??= defaultMode(it.name); it.gap ??= 1; } // pre-episode data
+      return d;
+    }
   } catch { /* fall through to a fresh store */ }
-  return { items: SEED_ITEMS.map(named), tags: SEED_TAGS.map(named), entries: [], lastExport: null };
+  return { items: SEED_ITEMS.map(newItem), tags: SEED_TAGS.map(named), entries: [], lastExport: null };
 }
 let db = load();
 const save = () => localStorage.setItem(KEY, JSON.stringify(db));
@@ -29,6 +37,11 @@ const tagById = id => db.tags.find(x => x.id === id);
 const entryById = id => db.entries.find(x => x.id === id);
 const active = list => list.filter(x => !x.archived);
 const byNewest = (a, b) => Date.parse(b.ts) - Date.parse(a.ts);
+
+// Per-device UI preference (not data), so a failure here is harmless.
+const UI_KEY = 'healthlog.scale';
+let scale = 'week';
+try { scale = localStorage.getItem(UI_KEY) || 'week'; } catch { /* keep default */ }
 
 /* ---------- Dates ----------
  * Entries keep the wall-clock time they were logged in (e.g. "2026-10-06T14:32:00+01:00"),
@@ -47,6 +60,36 @@ const eTime = e => e.ts.slice(11, 16);
 const dayNum = k => Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) / 864e5;
 const numDay = n => new Date(n * 864e5).toISOString().slice(0, 10);
 const fmtDay = (k, opts) => new Date(k + 'T12:00').toLocaleDateString(undefined, opts);
+const today = () => dayNum(todayKey());
+
+/* ---------- Episodes ----------
+ * Logged days of one item, grouped into runs: a day joins the current episode if at most
+ * `gap` unlogged days separate it from the episode's last day. Oldest first.
+ */
+function episodesOf(it) {
+  const days = new Map(); // dayNum -> { logs, tagIds }
+  for (const e of db.entries) {
+    if (e.itemId !== it.id) continue;
+    const n = dayNum(eDay(e));
+    const d = days.get(n) || { logs: 0, tagIds: new Set() };
+    d.logs++;
+    e.tagIds.forEach(t => d.tagIds.add(t));
+    days.set(n, d);
+  }
+  const eps = [];
+  for (const n of [...days.keys()].sort((a, b) => a - b)) {
+    const d = days.get(n), last = eps.at(-1);
+    if (last && n - last.end <= it.gap + 1) {
+      last.end = n;
+      last.logs += d.logs;
+      d.tagIds.forEach(t => last.tagIds.add(t));
+    } else eps.push({ start: n, end: n, logs: d.logs, tagIds: new Set(d.tagIds) });
+  }
+  return eps;
+}
+const epLength = ep => ep.end - ep.start + 1;
+// Still open: a log today would extend it.
+const isOngoing = (it, ep) => ep && today() - ep.end <= it.gap + 1;
 
 /* ---------- Tiny DOM helper ---------- */
 const $ = s => document.querySelector(s);
@@ -92,10 +135,19 @@ function renderLog() {
   const month = todayKey().slice(0, 7);
   const items = active(db.items);
   $('#grid').replaceChildren(...items.map(it => {
-    const days = new Set(db.entries.filter(e => e.itemId === it.id && e.ts.startsWith(month)).map(eDay)).size;
-    return h('button', { class: 'log-btn', onclick: () => logNow(it.id) },
+    let sub, ongoing = false;
+    if (it.mode === 'episodes') {
+      const last = episodesOf(it).at(-1);
+      ongoing = isOngoing(it, last);
+      sub = ongoing ? `Day ${today() - last.start + 1} · ${last.end === today() ? 'logged today' : 'tap for today'}`
+        : last ? `Last ended ${plural(today() - last.end, 'day')} ago` : 'No episodes yet';
+    } else {
+      const days = new Set(db.entries.filter(e => e.itemId === it.id && e.ts.startsWith(month)).map(eDay)).size;
+      sub = `${plural(days, 'day')} this month`;
+    }
+    return h('button', { class: 'log-btn' + (ongoing ? ' ongoing' : ''), onclick: () => logNow(it.id) },
       h('span', {}, it.name),
-      h('span', { class: 'sub' }, `${plural(days, 'day')} this month`));
+      h('span', { class: 'sub' }, sub));
   }));
   if (!items.length) $('#grid').append(h('p', { class: 'empty' }, 'No items yet. Add some in Settings.'));
 }
@@ -204,7 +256,6 @@ function renderHistory() {
 }
 
 /* ---------- Patterns view ---------- */
-const WEEKS = 12;
 let precede = { symptomId: null, window: 1 };
 
 function renderPatterns() {
@@ -212,7 +263,8 @@ function renderPatterns() {
   const items = db.items.filter(it => !it.archived || db.entries.some(e => e.itemId === it.id));
   if (!db.entries.length) return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'));
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  out.replaceChildren(monthSummary(items, byItem), ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
+  out.replaceChildren(monthSummary(items, byItem), scaleSwitch(),
+    ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
 }
 
 function monthSummary(items, byItem) {
@@ -235,27 +287,56 @@ function monthSummary(items, byItem) {
         h('td', {}, stat(byItem.get(it.id), prevM)))))));
 }
 
-function itemCard(it, entries) {
-  // Weekly counts, Monday-start weeks, oldest first.
-  const today = dayNum(todayKey());
-  const weekStart = n => n - (new Date(n * 864e5).getUTCDay() + 6) % 7;
-  const first = weekStart(today) - (WEEKS - 1) * 7;
-  const counts = Array(WEEKS).fill(0);
-  for (const e of entries) {
-    const i = Math.floor((dayNum(eDay(e)) - first) / 7);
-    if (i >= 0 && i < WEEKS) counts[i]++;
+function scaleSwitch() {
+  return h('div', { class: 'seg', role: 'group', 'aria-label': 'Chart period' },
+    ['week', 'month', 'year'].map(s => h('button', {
+      'aria-pressed': String(s === scale),
+      onclick: () => {
+        scale = s;
+        try { localStorage.setItem(UI_KEY, s); } catch { /* not critical */ }
+        renderPatterns();
+      },
+    }, s[0].toUpperCase() + s.slice(1))));
+}
+
+/* Chart periods for the current scale, oldest first: { from, to (dayNums, inclusive), label }. */
+function periods() {
+  const t = today(), [ty, tm] = todayKey().split('-').map(Number);
+  if (scale === 'week') {
+    const monday = t - (new Date(t * 864e5).getUTCDay() + 6) % 7;
+    return Array.from({ length: 12 }, (_, i) => {
+      const from = monday - (11 - i) * 7, k = numDay(from), d = +k.slice(8);
+      return { from, to: from + 6, label: i === 0 || d <= 7 ? fmtDay(k, { month: 'short', day: 'numeric' }) : String(d) };
+    });
   }
+  if (scale === 'month') {
+    return Array.from({ length: 12 }, (_, i) => {
+      const m = ty * 12 + tm - 1 - (11 - i), y = Math.floor(m / 12), mo = m % 12;
+      const from = Date.UTC(y, mo, 1) / 864e5, to = Date.UTC(y, mo + 1, 1) / 864e5 - 1;
+      const name = fmtDay(numDay(from), { month: 'short' });
+      return { from, to, label: i === 0 || mo === 0 ? `${name} ’${String(y).slice(2)}` : name };
+    });
+  }
+  const firstYear = Math.max(ty - 9, Math.min(...db.entries.map(e => +e.ts.slice(0, 4))));
+  return Array.from({ length: ty - firstYear + 1 }, (_, i) => ({
+    from: Date.UTC(firstYear + i, 0, 1) / 864e5, to: Date.UTC(firstYear + i + 1, 0, 1) / 864e5 - 1, label: String(firstYear + i),
+  }));
+}
+
+function itemCard(it, entries) {
+  // Bars count days with the item, not taps: three inhaler puffs on one day count once.
+  const days = [...new Set(entries.map(e => dayNum(eDay(e))))];
+  const ps = periods();
+  const counts = ps.map(p => days.filter(n => n >= p.from && n <= p.to).length);
   const max = Math.max(1, ...counts);
-  const bars = h('div', { class: 'bars', role: 'img', 'aria-label': `${it.name} per week, last ${WEEKS} weeks: ${counts.join(', ')}` },
+  const bars = h('div', { class: 'bars', role: 'img', 'aria-label': `${it.name}, days per ${scale}: ${counts.join(', ')}` },
     counts.map((c, i) => {
-      const start = numDay(first + i * 7);
-      const d = +start.slice(8);
       const bar = h('div', { class: 'bar' });
       bar.style.height = `${(c / max) * 100}%`;
       return h('div', { class: 'col' },
         h('span', { class: 'v' }, c || ''),
         h('div', { class: 'track' }, bar),
-        h('span', { class: 'x' }, i === 0 || d <= 7 ? fmtDay(start, { month: 'short', day: 'numeric' }) : String(d)));
+        h('span', { class: 'x' }, ps[i].label));
     }));
 
   const tagCounts = new Map();
@@ -263,8 +344,9 @@ function itemCard(it, entries) {
   const top = [...tagCounts].filter(([id]) => tagById(id)).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   return h('div', { class: 'card' },
-    h('h3', {}, `${it.name} · per week`),
+    h('h3', {}, `${it.name} · days per ${scale}`),
     bars,
+    it.mode === 'episodes' && episodeSection(it),
     h('strong', {}, 'Most tagged triggers'),
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
@@ -272,8 +354,42 @@ function itemCard(it, entries) {
       : h('p', { class: 'hint' }, 'No tags yet.'));
 }
 
-/* "What comes before it?": for each other item, how often it was logged in the window
- * before a symptom day, compared with how often it was logged before any day at all. */
+const median = xs => {
+  const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;
+  return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2);
+};
+
+function episodeSection(it) {
+  const eps = episodesOf(it);
+  if (!eps.length) return null;
+  const last = eps.at(-1), ongoing = isOngoing(it, last);
+  const done = ongoing ? eps.slice(0, -1) : eps; // an open episode's length isn't known yet
+  const between = eps.slice(1).map((ep, i) => ep.start - eps[i].end - 1);
+  const thisYear = todayKey().slice(0, 4);
+  const fmt = n => { const k = numDay(n); return fmtDay(k, { month: 'short', day: 'numeric', ...(k.startsWith(thisYear) ? {} : { year: 'numeric' }) }); };
+
+  const lines = [
+    ongoing ? `Ongoing: day ${today() - last.start + 1}.` : `${plural(today() - last.end, 'day')} since the last one ended.`,
+    done.length && `${plural(eps.length, 'episode')}. Typically ${plural(median(done.map(epLength)), 'day')}, longest ${plural(Math.max(...done.map(epLength)), 'day')}.`,
+    between.length && `Typically ${plural(median(between), 'day')} between episodes.`,
+  ].filter(Boolean);
+
+  const recent = eps.slice(-8).reverse();
+  return h('div', { class: 'episodes' },
+    h('strong', {}, 'Episodes'),
+    lines.map(l => h('p', { class: 'ep-stat' }, l)),
+    h('ul', { class: 'ep-list' }, recent.map(ep => {
+      const tags = [...ep.tagIds].map(id => tagById(id)?.name).filter(Boolean).join(', ');
+      const range = ep.start === ep.end ? fmt(ep.start) : `${fmt(ep.start)} – ${fmt(ep.end)}`;
+      const len = ongoing && ep === last ? `day ${today() - ep.start + 1}, ongoing` : plural(epLength(ep), 'day');
+      return h('li', {}, h('span', { class: 'ep-range' }, range), ` · ${len} · ${plural(ep.logs, 'log')}`, tags && h('span', { class: 'meta' }, ` · ${tags}`));
+    })),
+    eps.length > recent.length && h('p', { class: 'hint' }, `…and ${eps.length - recent.length} earlier.`));
+}
+
+/* "What comes before it?": for each other item, how often it was logged in the window before
+ * a symptom day, compared with how often it was logged before any day at all. For episode items
+ * only the first day of each episode counts: what happened on day 5 of a cold sore isn't a trigger. */
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
@@ -282,24 +398,27 @@ function precedeCard(items) {
   }
   if (!withData.some(it => it.id === precede.symptomId)) precede.symptomId = withData[0].id;
 
-  const today = dayNum(todayKey());
+  const t = today();
   const firstDay = Math.min(...db.entries.map(e => dayNum(eDay(e))));
-  const start = Math.max(firstDay, today - 364);
-  const total = today - start + 1;
+  const start = Math.max(firstDay, t - 364);
+  const total = t - start + 1;
   const daysOf = id => new Set(db.entries.filter(e => e.itemId === id).map(e => dayNum(eDay(e))));
-  const symptomDays = [...daysOf(precede.symptomId)].filter(n => n >= start && n <= today);
+  const sym = itemById(precede.symptomId);
+  const episodic = sym.mode === 'episodes';
+  const symptomDays = (episodic ? episodesOf(sym).map(ep => ep.start) : [...daysOf(sym.id)])
+    .filter(n => n >= start && n <= t);
 
-  const rows = withData.filter(it => it.id !== precede.symptomId).map(it => {
+  const rows = withData.filter(it => it.id !== sym.id).map(it => {
     const ex = daysOf(it.id);
     const exposed = n => { for (let k = 0; k <= precede.window; k++) if (ex.has(n - k)) return true; return false; };
     const hit = symptomDays.filter(exposed).length;
     let base = 0;
-    for (let n = start; n <= today; n++) if (exposed(n)) base++;
+    for (let n = start; n <= t; n++) if (exposed(n)) base++;
     const pS = symptomDays.length ? hit / symptomDays.length : 0, pB = base / total;
     return { it, hit, pS, pB, lift: pB ? pS / pB : 0 };
   }).sort((a, b) => b.lift - a.lift);
 
-  const symName = itemById(precede.symptomId).name;
+  const unit = episodic ? `${sym.name} episode` : `${sym.name} day`;
   const pct = x => `${Math.round(x * 100)}%`;
   const enough = symptomDays.length >= 5;
 
@@ -307,15 +426,15 @@ function precedeCard(items) {
     h('h3', {}, 'What comes before it?'),
     h('div', { class: 'controls' },
       h('select', { 'aria-label': 'Symptom', onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
-        withData.map(it => h('option', { value: it.id, selected: it.id === precede.symptomId }, it.name))),
+        withData.map(it => h('option', { value: it.id, selected: it.id === sym.id }, it.name))),
       h('select', { 'aria-label': 'Window', onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
-        [['0', 'Same day'], ['1', '≤ 1 day before'], ['2', '≤ 2 days before']]
-          .map(([v, l]) => h('option', { value: v, selected: +v === precede.window }, l)))),
-    h('p', { class: 'hint' }, `${plural(symptomDays.length, `${symName} day`)} over the last ${plural(total, 'day')}.` +
-      (enough ? '' : ' Too few to read much into yet.')),
+        [[0, 'Same day'], [1, '≤ 1 day before'], [2, '≤ 2 days before'], [3, '≤ 3 days before'], [5, '≤ 5 days before']]
+          .map(([v, l]) => h('option', { value: v, selected: v === precede.window }, l)))),
+    h('p', { class: 'hint' }, `${plural(symptomDays.length, unit)} over the last ${plural(total, 'day')}` +
+      (episodic ? ', counting each episode’s first day.' : '.') + (enough ? '' : ' Too few to read much into yet.')),
     rows.map(r => h('div', { class: 'precede-row' + (enough && r.hit >= 3 && r.lift >= 1.5 ? ' strong' : '') },
       h('div', {}, h('strong', {}, r.it.name), ' ', h('span', { class: 'lift' }, r.pB ? `${r.lift.toFixed(1)}×` : '–')),
-      h('div', { class: 'meta' }, `Before ${pct(r.pS)} of ${symName} days (${r.hit}/${symptomDays.length}) vs ${pct(r.pB)} of all days`))),
+      h('div', { class: 'meta' }, `Before ${pct(r.pS)} of ${unit}s (${r.hit}/${symptomDays.length}) vs ${pct(r.pB)} of all days`))),
     h('p', { class: 'hint' }, '“2.0×” means it shows up before symptom days twice as often as on a typical day. ' +
       'Correlation, not proof, and it only works if you log the exposure every time, not just on bad days. ' +
       'Trigger tags can’t be compared this way because they’re only recorded on symptom entries.'));
@@ -325,7 +444,7 @@ function precedeCard(items) {
 const cleanName = s => s.replace(/;/g, ',').trim(); // ';' separates tags in the CSV
 const nameTaken = (list, name, self) => list.some(x => x !== self && x.name.toLowerCase() === name.toLowerCase());
 
-function renderList(list, el) {
+function renderList(list, el, extra) {
   el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
     h('input', {
       value: x.name, 'aria-label': 'Name',
@@ -336,30 +455,42 @@ function renderList(list, el) {
     }),
     h('button', { class: 'icon-btn', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
     h('button', { class: 'icon-btn', 'aria-label': 'Move down', disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'))));
+    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'),
+    extra?.(x))));
+}
+
+// Second line of an item row: how to track it.
+function itemOptions(it) {
+  const update = (key, v) => { it[key] = v; save(); renderAll(); };
+  return h('div', { class: 'list-sub' },
+    h('select', { 'aria-label': `How to track ${it.name}`, onchange: ev => update('mode', ev.target.value) },
+      [['count', 'Count days'], ['episodes', 'Episodes']]
+        .map(([v, l]) => h('option', { value: v, selected: it.mode === v }, l))),
+    it.mode === 'episodes' && h('select', { 'aria-label': `Days without a log allowed inside one ${it.name} episode`, onchange: ev => update('gap', +ev.target.value) },
+      [0, 1, 2, 3, 7].map(g => h('option', { value: g, selected: it.gap === g }, g ? `Skip ≤ ${plural(g, 'day')}` : 'No skipped days'))));
 }
 function move(list, i, d) {
   [list[i], list[i + d]] = [list[i + d], list[i]];
   save();
   renderAll();
 }
-function bindAdd(form, list) {
+function bindAdd(form, list, make) {
   form.addEventListener('submit', ev => {
     ev.preventDefault();
     const v = cleanName(form.elements.name.value);
     if (!v) return;
     if (nameTaken(list, v)) return toast(`“${v}” already exists`);
-    list.push(named(v));
+    list.push(make(v));
     save();
     form.reset();
     renderAll();
   });
 }
-bindAdd($('#add-item'), db.items);
-bindAdd($('#add-tag'), db.tags);
+bindAdd($('#add-item'), db.items, newItem);
+bindAdd($('#add-tag'), db.tags, named);
 
 function renderSettings() {
-  renderList(db.items, $('#items-list'));
+  renderList(db.items, $('#items-list'), itemOptions);
   renderList(db.tags, $('#tags-list'));
   const days = db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
   // Nag only once there's something worth losing: 30 days since the last export,
@@ -415,10 +546,10 @@ function parseCSV(text) {
   return rows;
 }
 
-function findOrCreate(list, name) {
+function findOrCreate(list, name, make) {
   const n = cleanName(name);
   let x = list.find(x => x.name.toLowerCase() === n.toLowerCase());
-  if (!x) list.push(x = named(n));
+  if (!x) list.push(x = make(n));
   return x;
 }
 
@@ -435,11 +566,11 @@ function importCSV(text) {
     // Accept "2026-10-06 14:32" (e.g. after a spreadsheet round-trip): treat as this device's local time.
     if (!/[+-]\d\d:\d\d$|Z$/.test(ts)) ts = isNaN(new Date(ts.replace(' ', 'T'))) ? '' : isoLocal(new Date(ts.replace(' ', 'T')));
     if (!ts || isNaN(Date.parse(ts)) || !itemName) { bad++; continue; }
-    const item = findOrCreate(db.items, itemName);
+    const item = findOrCreate(db.items, itemName, newItem);
     const key = `${Date.parse(ts)}|${item.id}`;
     if (seen.has(key)) { dupes++; continue; }
     seen.add(key);
-    const tagIds = (r[col.tags] || '').split(';').map(s => s.trim()).filter(Boolean).map(n => findOrCreate(db.tags, n).id);
+    const tagIds = (r[col.tags] || '').split(';').map(s => s.trim()).filter(Boolean).map(n => findOrCreate(db.tags, n, named).id);
     db.entries.push({ id: uid(), itemId: item.id, ts, tagIds: [...new Set(tagIds)], note: (r[col.note] || '').trim() });
     added++;
   }

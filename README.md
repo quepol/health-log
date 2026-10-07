@@ -4,14 +4,26 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
-- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month.
+- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month. For an episode item it shows the current episode instead ("Day 3 · tap for today").
 - **History:** every entry, newest first. Tap one to change its item, date/time, tags or note, or to delete it. The **+ Add past entry** button backdates an entry.
 - **Patterns:**
   - Days per item this month and last month.
-  - Weekly bars for the last 12 weeks.
+  - Bars of **days** with each item (not taps), switchable between week (last 12), month (last 12) and year.
+  - For episode items: each flare-up with its dates and length, plus typical length, longest, typical time between episodes, and days since the last one.
   - The most frequent tags for each item.
   - **What comes before it?** for each item, how often it was logged on or just before a symptom day, compared with how often it appears on any day.
-- **Settings:** add, rename, reorder and archive items and tags, plus CSV export and import.
+- **Settings:** add, rename, reorder and archive items and tags, choose how each item is tracked, and export or import CSV.
+
+### Count days vs Episodes
+
+Each item is tracked in one of two ways, chosen in Settings:
+
+- **Count days** suits things that come and go within a day, like a headache.
+- **Episodes** suits flare-ups that last several days, like a cold sore or a run of inhaler use. Tap the item **once each day it's active**. Logged days with no more than the item's skip allowance between them (default: 1 day) count as one episode, so forgetting a single day doesn't split an outbreak in two. Multiple taps on one day are fine; for the inhaler, the log count works as a puff count.
+
+Cold sore and Inhaler start as Episodes, and new items start as Count days.
+
+For Episodes items, **What comes before it?** looks only at the **first day** of each episode. Exposures during day 5 of an outbreak aren't triggers. Cold sores can lag their trigger by several days, so try the ≤ 3 or ≤ 5 day windows for them.
 
 ### Getting real trigger signal
 
@@ -20,6 +32,8 @@ Tags only get recorded on symptom days. Tags therefore can't tell you whether "p
 ## Back up your data
 
 Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
+
+Item settings (Count/Episodes, skip allowance) aren't in the CSV. After restoring to a new device, set them again in Settings.
 
 CSV format: `timestamp,item,tags,note`. Tags are separated by `;`. Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works on import and is read as the device's local time.
 
@@ -61,6 +75,6 @@ The service worker serves the cached app instantly and fetches updates in the ba
 | --- | --- |
 | `index.html` | Markup for all four screens and the edit dialog |
 | `style.css` | Styles; light/dark mode via `prefers-color-scheme` |
-| `app.js` | Storage, rendering, patterns and CSV (one file, about 500 lines) |
+| `app.js` | Storage, rendering, episodes, patterns and CSV (one file, about 600 lines) |
 | `sw.js` | Offline cache |
 | `manifest.webmanifest`, `*.png` | Install metadata and icons |
