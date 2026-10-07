@@ -89,6 +89,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .steps .hint { display: block; font-size: .85rem; }
 .share-icon { width: 1.2em; height: 1.2em; vertical-align: -.2em; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 body.onboarding .tabs { display: none; }
+body.installing .top { display: none; }
+body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .ob-start { width: 100%; margin-top: 1.5rem; min-height: 56px; font-size: 1.1rem; }
 .icon-btn { min-width: 48px; padding: 0; font-size: 1.3rem; }
 .small { min-height: 44px; padding: 0 .75rem; font-size: .9rem; }

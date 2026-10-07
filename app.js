@@ -747,7 +747,12 @@ function onboard() {
   const needsInstall = iOS && !installed;
   $('#install-hint').hidden = !needsInstall;
   $('#picker').hidden = needsInstall;
-  $('#install-skip').addEventListener('click', () => { $('#install-hint').hidden = true; $('#picker').hidden = false; });
+  document.body.classList.toggle('installing', needsInstall); // the card has its own heading
+  $('#install-skip').addEventListener('click', () => {
+    $('#install-hint').hidden = true;
+    $('#picker').hidden = false;
+    document.body.classList.remove('installing');
+  });
 
   document.body.classList.add('onboarding');
   show('onboard');
