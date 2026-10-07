@@ -388,27 +388,27 @@ function scaleSwitch() {
     }, s[0].toUpperCase() + s.slice(1))));
 }
 
-/* Chart periods for the current scale, oldest first: { from, to (dayNums, inclusive), label }. */
+/* Chart periods for the current scale, oldest first: { from, to (dayNums, inclusive), top, bottom }.
+ * Labels are two short lines, e.g. "Sep" over "7" (week) or "Jan" over "’26" (month), so they fit 12 across. */
 function periods() {
   const t = today(), [ty, tm] = todayKey().split('-').map(Number);
   if (scale === 'week') {
     const monday = t - (new Date(t * 864e5).getUTCDay() + 6) % 7;
     return Array.from({ length: 12 }, (_, i) => {
       const from = monday - (11 - i) * 7, k = numDay(from), d = +k.slice(8);
-      return { from, to: from + 6, label: i === 0 || d <= 7 ? fmtDay(k, { month: 'short', day: 'numeric' }) : String(d) };
+      return { from, to: from + 6, top: i === 0 || d <= 7 ? fmtDay(k, { month: 'short' }) : '', bottom: String(d) };
     });
   }
   if (scale === 'month') {
     return Array.from({ length: 12 }, (_, i) => {
       const m = ty * 12 + tm - 1 - (11 - i), y = Math.floor(m / 12), mo = m % 12;
       const from = Date.UTC(y, mo, 1) / 864e5, to = Date.UTC(y, mo + 1, 1) / 864e5 - 1;
-      const name = fmtDay(numDay(from), { month: 'short' });
-      return { from, to, label: i === 0 || mo === 0 ? `${name} ’${String(y).slice(2)}` : name };
+      return { from, to, top: fmtDay(numDay(from), { month: 'short' }), bottom: i === 0 || mo === 0 ? `’${String(y).slice(2)}` : '' };
     });
   }
   const firstYear = Math.max(ty - 9, Math.min(...db.entries.map(e => +e.ts.slice(0, 4))));
   return Array.from({ length: ty - firstYear + 1 }, (_, i) => ({
-    from: Date.UTC(firstYear + i, 0, 1) / 864e5, to: Date.UTC(firstYear + i + 1, 0, 1) / 864e5 - 1, label: String(firstYear + i),
+    from: Date.UTC(firstYear + i, 0, 1) / 864e5, to: Date.UTC(firstYear + i + 1, 0, 1) / 864e5 - 1, top: String(firstYear + i), bottom: '',
   }));
 }
 
@@ -425,7 +425,7 @@ function itemCard(it, entries) {
       return h('div', { class: 'col' },
         h('span', { class: 'v' }, c || ''),
         h('div', { class: 'track' }, bar),
-        h('span', { class: 'x' }, ps[i].label));
+        h('span', { class: 'x' }, h('span', {}, ps[i].top || '\u00a0'), ps.some(p => p.bottom) && h('span', {}, ps[i].bottom || '\u00a0')));
     }));
 
   const tagCounts = new Map();

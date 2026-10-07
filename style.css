@@ -50,13 +50,14 @@ h3 { font-size: 1.05rem; margin: 0 0 .5rem; }
 
 .top {
   position: sticky; top: 0; z-index: 2;
-  padding: calc(env(safe-area-inset-top) + .75rem) 1rem .75rem;
+  padding: calc(env(safe-area-inset-top) + .75rem) 16px .75rem;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
 main {
   max-width: 45rem; margin: 0 auto;
-  padding: 1rem 1rem calc(6rem + env(safe-area-inset-bottom));
+  /* Side margins stay 16px (the iOS standard) rather than growing with text, which only steals width. */
+  padding: 1rem 16px calc(6rem + env(safe-area-inset-bottom));
 }
 
 /* Buttons */
@@ -183,18 +184,20 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .entry .meta { grid-column: 2; font-size: .85rem; color: var(--muted); }
 
 /* Patterns */
-.card { padding: 1rem; margin-bottom: 1rem; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
+.card { padding: 1rem min(1rem, 16px); margin-bottom: 1rem; border-radius: 16px; background: var(--surface); border: 1px solid var(--border); }
 .summary { width: 100%; border-collapse: collapse; }
 .table-wrap { overflow-x: auto; } /* very large text: scroll the table, not the page */
 .summary th, .summary td { padding: .5rem .25rem; text-align: left; border-bottom: 1px solid var(--border); }
 .summary td { font-variant-numeric: tabular-nums; }
 .summary small { color: var(--muted); }
-.bars { display: flex; gap: 3px; align-items: flex-end; margin: .25rem 0 .75rem; }
+.bars { display: flex; gap: 2px; align-items: flex-end; margin: .25rem 0 .75rem; }
 .bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
-.bars .v { font-size: .7rem; height: 1rem; color: var(--muted); }
+/* Chart numbers stay a fixed small size so 12 columns always fit; everything else on the page scales. */
+.bars .v { font-size: 11px; line-height: 16px; height: 16px; color: var(--muted); }
 .bars .track { height: 5.5rem; width: 100%; display: flex; align-items: flex-end; border-bottom: 1px solid var(--border); }
 .bars .bar { width: 100%; background: var(--bar); border-radius: 4px 4px 0 0; }
-.bars .x { font-size: .65rem; color: var(--muted); white-space: nowrap; height: 1rem; }
+.bars .x { display: flex; flex-direction: column; align-items: center; margin-top: 3px;
+  font-size: 11px; line-height: 14px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .taglist { margin: 0; padding-left: 1.1rem; }
 .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; margin-bottom: 1rem; border-radius: 14px; background: var(--surface-2); }
 .seg button { border: 0; background: none; border-radius: 10px; min-height: 2.75rem; }
@@ -217,9 +220,10 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 /* Large text: the three buttons wrap together, right-aligned under the name. */
 .row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; margin-left: auto; }
 .list.stacked .list-row input { flex-basis: 100%; }
-.row-actions .icon-btn { min-width: max(44px, 2.6rem); }
+/* Narrow but tall: rarely used, so they give width back to the name. Full height keeps them easy to hit. */
+.row-actions .icon-btn { min-width: 0; width: max(34px, 1.9rem); font-size: 1.1rem; }
 .hide-btn { min-width: 4.2rem; } /* same width for Hide and Show */
-.list-row.archived input { color: var(--muted); font-style: italic; }
+.list-row.archived input { color: var(--muted); text-decoration: line-through; }
 input, select, textarea {
   font-size: max(1rem, 16px); /* below 16px, iOS zooms the page on focus */
   min-height: 3rem; padding: .5rem .75rem; width: 100%;
