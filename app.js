@@ -271,7 +271,9 @@ function openEdit(id) {
   $('#edit-title').textContent = e ? 'Edit entry' : 'Add past entry';
   $('#f-item').replaceChildren(...db.items.filter(it => !it.archived || it.id === e?.itemId)
     .map(it => h('option', { value: it.id, selected: it.id === e?.itemId }, it.name)));
-  $('#f-ts').value = (e ? e.ts : isoLocal(new Date())).slice(0, 16);
+  const ts = e ? e.ts : isoLocal(new Date());
+  $('#f-date').value = ts.slice(0, 10);
+  $('#f-time').value = ts.slice(11, 16);
   editTags = new Set(e ? e.tagIds : []);
   $('#f-tags').replaceChildren(...db.tags.filter(t => !t.archived || editTags.has(t.id))
     .map(t => chip(t.name, editTags.has(t.id), on => on ? editTags.add(t.id) : editTags.delete(t.id))));
@@ -283,7 +285,7 @@ function openEdit(id) {
 
 $('#edit').addEventListener('close', () => {
   if ($('#edit').returnValue !== 'save') return;
-  const input = $('#f-ts').value;
+  const input = `${$('#f-date').value}T${$('#f-time').value}`;
   const d = new Date(input);
   if (!$('#f-item').value || isNaN(d)) return;
   const e = editingId ? entryById(editingId) : { id: uid() };

@@ -136,7 +136,11 @@
     <form method="dialog">
       <h2 id="edit-title">Edit entry</h2>
       <label>Item <select id="f-item"></select></label>
-      <label>Date &amp; time <input type="datetime-local" id="f-ts" required></label>
+      <!-- Separate date and time: iOS's combined field won't shrink below its text and overflows at large sizes. -->
+      <div class="datetime">
+        <label>Date <input type="date" id="f-date" required></label>
+        <label>Time <input type="time" id="f-time" required></label>
+      </div>
       <fieldset>
         <legend>Triggers</legend>
         <div id="f-tags" class="chips"></div>
