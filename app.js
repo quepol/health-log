@@ -9,8 +9,6 @@
  */
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
-// Of the trigger tags, only these start selected: a short list is less daunting.
-const STARTER_TAGS = ['Stress', 'Poor sleep'];
 const SUGGESTED_ITEMS = ['Headache', 'Heartburn', 'Back pain', 'Exercise'];
 const SEED_TAGS = ['Stress', 'Poor sleep', 'Dehydrated'];
 
@@ -732,7 +730,7 @@ function onboard() {
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
   const tagNames = [...SEED_TAGS];
-  const tags = new Set(STARTER_TAGS);
+  const tags = new Set(); // nothing pre-selected, same as the buttons above
 
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
