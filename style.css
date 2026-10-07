@@ -82,7 +82,15 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .wipe { margin-top: .75rem; border-color: var(--danger); }
 .wipe p { margin: 0 0 .6rem; }
 .card > h2:first-child { margin-top: 0; }
+#install-hint h2 { font-size: 1.4rem; margin-bottom: .4rem; }
+#install-hint h3 { margin: 1.25rem 0 .5rem; }
+.steps { margin: 0 0 1rem; padding-left: 1.4rem; }
+.steps li { margin-bottom: .6rem; padding-left: .2rem; }
+.steps .hint { display: block; font-size: .85rem; }
+.share-icon { width: 1.2em; height: 1.2em; vertical-align: -.2em; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 body.onboarding .tabs { display: none; }
+body.installing .top { display: none; }
+body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .ob-start { width: 100%; margin-top: 1.5rem; min-height: 56px; font-size: 1.1rem; }
 .icon-btn { min-width: 48px; padding: 0; font-size: 1.3rem; }
 .small { min-height: 44px; padding: 0 .75rem; font-size: .9rem; }
