@@ -41,7 +41,7 @@
       <div id="picker">
         <h2>What do you want to keep track of?</h2>
         <p class="hint">Symptoms, exercise, anything you want to keep an eye on. Each one becomes a button
-          you tap when it happens. You can change these any time in <strong>Settings → Your buttons</strong>.</p>
+          you tap when it happens. You can change these any time in <strong>Settings → What you track</strong>.</p>
         <div id="ob-items" class="chips"></div>
         <form id="ob-add" class="add-row">
           <input name="name" placeholder="Add your own" autocomplete="off">
@@ -85,7 +85,7 @@
     </section>
 
     <section id="view-settings" class="view" hidden>
-      <h2>Your buttons</h2>
+      <h2>What you track</h2>
       <div id="items-list" class="list"></div>
       <form id="add-item" class="add-row">
         <input name="name" placeholder="e.g. Heartburn" required autocomplete="off">
@@ -98,9 +98,12 @@
       <h2 id="tags-heading">Details</h2>
       <div id="tags-list" class="list"></div>
       <form id="add-tag" class="add-row">
-        <input name="name" placeholder="New tag" required autocomplete="off">
+        <input name="name" placeholder="e.g. Ate late" required autocomplete="off">
         <button class="primary">Add</button>
       </form>
+      <p class="hint">Details are optional extras you can add after tapping a button, like Stress or Poor sleep.
+        Patterns shows which ones come up most for each thing you track. Hide any you don't use;
+        past entries keep them.</p>
 
       <h2>Data</h2>
       <p id="backup-status"></p>
