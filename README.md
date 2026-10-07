@@ -87,7 +87,7 @@ The service worker serves the cached app instantly and fetches updates in the ba
 | File | Purpose |
 | --- | --- |
 | `index.html` | Markup for all four screens and the edit dialog |
-| `style.css` | Styles; light/dark mode via `prefers-color-scheme` |
+| `style.css` | Styles; light/dark mode via `prefers-color-scheme`; all sizes in `rem`, so text follows the phone's text-size setting |
 | `app.js` | Storage, rendering, episodes, patterns and CSV (one file, about 600 lines) |
 | `sw.js` | Offline cache |
 | `manifest.webmanifest`, `*.png` | Install metadata and icons |
