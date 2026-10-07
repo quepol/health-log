@@ -213,8 +213,13 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 
 /* Settings */
 .list-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: .4rem; }
-.list-row input { flex: 1 1 8rem; min-width: 0; } /* large text: buttons wrap under the name */
-.list-row.archived input { color: var(--muted); text-decoration: line-through; }
+.list-row input { flex: 1 1 5rem; min-width: 0; }
+/* Large text: the three buttons wrap together, right-aligned under the name. */
+.row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; margin-left: auto; }
+.list.stacked .list-row input { flex-basis: 100%; }
+.row-actions .icon-btn { min-width: max(44px, 2.6rem); }
+.hide-btn { min-width: 4.2rem; } /* same width for Hide and Show */
+.list-row.archived input { color: var(--muted); font-style: italic; }
 input, select, textarea {
   font-size: max(1rem, 16px); /* below 16px, iOS zooms the page on focus */
   min-height: 3rem; padding: .5rem .75rem; width: 100%;

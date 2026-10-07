@@ -159,7 +159,7 @@ function fitGrid() {
   const tooNarrow = [...grid.querySelectorAll('.log-btn > span')].some(s => s.scrollWidth > s.clientWidth + 1);
   grid.classList.toggle('one-col', tooNarrow);
 }
-addEventListener('resize', fitGrid);
+addEventListener('resize', () => { fitGrid(); fitLists(); });
 
 // Last tile in the grid: tap to type a new item right there.
 function addTile() {
@@ -528,9 +528,24 @@ function renderList(list, el) {
         if (v && !nameTaken(list, v, x)) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
       },
     }),
-    h('button', { class: 'icon-btn', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
-    h('button', { class: 'icon-btn', 'aria-label': 'Move down', disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'))));
+    // Kept together so that, when the row is too narrow, they wrap as one group under the name.
+    h('div', { class: 'row-actions' },
+      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
+      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
+      // Hidden items leave the Log screen / trigger row; their history stays.
+      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; save(); renderAll(); } },
+        x.archived ? 'Show' : 'Hide')))));
+}
+
+// One line per row only while every name is fully visible; otherwise the whole list
+// switches to name-above-buttons, so rows stay consistent.
+function fitLists() {
+  for (const el of document.querySelectorAll('.list')) {
+    el.classList.remove('stacked');
+    if (el.offsetParent === null) continue; // hidden: measured when Settings is shown
+    const clipped = [...el.querySelectorAll('.list-row input')].some(i => i.scrollWidth > i.clientWidth + 1);
+    el.classList.toggle('stacked', clipped);
+  }
 }
 
 function move(list, i, d) {
@@ -556,6 +571,7 @@ bindAdd($('#add-tag'), db.tags, named);
 function renderSettings() {
   renderList(db.items, $('#items-list'));
   renderList(db.tags, $('#tags-list'));
+  fitLists();
   const days = db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
   // Nag only once there's something worth losing: 30 days since the last export,
   // or (never exported) the oldest entry is over two weeks old.
@@ -661,6 +677,7 @@ function show(view) {
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
   if (view !== 'log') dismissTagRow(); else fitGrid();
+  if (view === 'settings') fitLists();
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
