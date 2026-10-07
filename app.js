@@ -211,7 +211,7 @@ function renderTagRow() {
   const tags = active(db.tags);
   $('#tagrow').hidden = !e || !tags.length;
   if ($('#tagrow').hidden) return;
-  $('#tagrow-label').textContent = `Add details to ${itemById(e.itemId).name}?`;
+  $('#tagrow-label').textContent = 'What else was going on?';
   $('#tagrow-chips').replaceChildren(...tags.map(t => chip(t.name, e.tagIds.includes(t.id), on => {
     e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
     save();
