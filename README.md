@@ -14,7 +14,7 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
   - For episode items: each flare-up with its dates and length, plus typical length, longest, typical time between episodes, and days since the last one.
   - The most frequent tags for each item.
   - **What comes before it?** for each item, how often it was logged on or just before a symptom day, compared with how often it appears on any day.
-- **Settings:** add, rename, reorder and archive items and tags, plus CSV export and import.
+- **Settings:** add, rename, reorder and hide items and tags (hidden ones leave the Log screen but keep their history), plus CSV export and import.
 
 ### Episodes
 

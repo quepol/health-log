@@ -88,7 +88,7 @@
       <h2>Items</h2>
       <div id="items-list" class="list"></div>
       <form id="add-item" class="add-row">
-        <input name="name" placeholder="New item, e.g. Heartburn" required autocomplete="off">
+        <input name="name" placeholder="e.g. Heartburn" required autocomplete="off">
         <button class="primary">Add</button>
       </form>
       <p class="hint">Tip: log exposures (Alcohol, Bad sleep, Skipped meal…) as items too.
@@ -134,9 +134,13 @@
 
   <dialog id="edit">
     <form method="dialog">
-      <h2 id="edit-title">Edit entry</h2>
+      <h2 id="edit-title" tabindex="-1">Edit entry</h2>
       <label>Item <select id="f-item"></select></label>
-      <label>Date &amp; time <input type="datetime-local" id="f-ts" required></label>
+      <!-- Separate date and time: iOS's combined field won't shrink below its text and overflows at large sizes. -->
+      <div class="datetime">
+        <label>Date <input type="date" id="f-date" required></label>
+        <label>Time <input type="time" id="f-time" required></label>
+      </div>
       <fieldset>
         <legend>Triggers</legend>
         <div id="f-tags" class="chips"></div>

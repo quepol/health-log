@@ -59,6 +59,13 @@ const eTime = e => e.ts.slice(11, 16);
 const dayNum = k => Date.UTC(+k.slice(0, 4), +k.slice(5, 7) - 1, +k.slice(8, 10)) / 864e5;
 const numDay = n => new Date(n * 864e5).toISOString().slice(0, 10);
 const fmtDay = (k, opts) => new Date(k + 'T12:00').toLocaleDateString(undefined, opts);
+// An entry's wall-clock time in the phone's own style, e.g. "11:51 PM" or "23:51";
+// with withDate, "Aug 27, 11:51 PM" (plus the year if it isn't this year).
+const H24 = /^h2/.test(new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle || '');
+const fmtWhen = (e, withDate) => new Date(e.ts.slice(0, 16)).toLocaleString(undefined, {
+  hour: H24 ? '2-digit' : 'numeric', minute: '2-digit',
+  ...(withDate && { month: 'short', day: 'numeric', ...(e.ts.startsWith(todayKey().slice(0, 4)) ? {} : { year: 'numeric' }) }),
+});
 const today = () => dayNum(todayKey());
 
 /* ---------- Episodes ----------
@@ -120,8 +127,8 @@ function chip(label, pressed, onToggle) {
 let toastTimer;
 function toast(msg, actions = []) {
   const t = $('#toast');
-  t.replaceChildren(h('span', {}, msg), actions.length ? h('div', { class: 'toast-actions' }, actions.map(([label, fn]) =>
-    h('button', { onclick: () => { hideToast(); fn(); } }, label))) : null);
+  const buttons = actions.map(([label, fn]) => h('button', { onclick: () => { hideToast(); fn(); } }, label));
+  t.replaceChildren(h('span', {}, msg), ...(buttons.length ? [h('div', { class: 'toast-actions' }, buttons)] : []));
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, 6000);
@@ -159,7 +166,7 @@ function fitGrid() {
   const tooNarrow = [...grid.querySelectorAll('.log-btn > span')].some(s => s.scrollWidth > s.clientWidth + 1);
   grid.classList.toggle('one-col', tooNarrow);
 }
-addEventListener('resize', fitGrid);
+addEventListener('resize', () => { fitGrid(); fitLists(); });
 
 // Last tile in the grid: tap to type a new item right there.
 function addTile() {
@@ -195,7 +202,7 @@ function logNow(itemId) {
   lastLoggedId = e.id;
   gapAsk = missedDays(itemById(itemId));
   renderAll();
-  toast(`Logged ${itemById(itemId).name} · ${eTime(e)}`, [
+  toast(`Logged ${itemById(itemId).name} · ${fmtWhen(e)}`, [
     ['Undo', () => removeEntry(e.id)],
     ['Edit', () => openEdit(e.id)],
   ]);
@@ -271,7 +278,9 @@ function openEdit(id) {
   $('#edit-title').textContent = e ? 'Edit entry' : 'Add past entry';
   $('#f-item').replaceChildren(...db.items.filter(it => !it.archived || it.id === e?.itemId)
     .map(it => h('option', { value: it.id, selected: it.id === e?.itemId }, it.name)));
-  $('#f-ts').value = (e ? e.ts : isoLocal(new Date())).slice(0, 16);
+  const ts = e ? e.ts : isoLocal(new Date());
+  $('#f-date').value = ts.slice(0, 10);
+  $('#f-time').value = ts.slice(11, 16);
   editTags = new Set(e ? e.tagIds : []);
   $('#f-tags').replaceChildren(...db.tags.filter(t => !t.archived || editTags.has(t.id))
     .map(t => chip(t.name, editTags.has(t.id), on => on ? editTags.add(t.id) : editTags.delete(t.id))));
@@ -279,11 +288,14 @@ function openEdit(id) {
   $('#f-delete').hidden = !e;
   $('#edit').returnValue = '';
   $('#edit').showModal();
+  // The dialog focuses its first field, and on iPhone a focused picker pops open. That suits
+  // adding (pick the item first) but not editing, where people should see the whole entry.
+  (e ? $('#edit-title') : $('#f-item')).focus();
 }
 
 $('#edit').addEventListener('close', () => {
   if ($('#edit').returnValue !== 'save') return;
-  const input = $('#f-ts').value;
+  const input = `${$('#f-date').value}T${$('#f-time').value}`;
   const d = new Date(input);
   if (!$('#f-item').value || isNaN(d)) return;
   const e = editingId ? entryById(editingId) : { id: uid() };
@@ -295,7 +307,7 @@ $('#edit').addEventListener('close', () => {
   if (!editingId) db.entries.push(e);
   save();
   renderAll();
-  toast(editingId ? 'Saved' : `Added ${itemById(e.itemId).name} · ${eDay(e)} ${eTime(e)}`);
+  toast(editingId ? 'Saved' : `Added ${itemById(e.itemId).name} · ${fmtWhen(e, true)}`);
 });
 
 $('#f-delete').addEventListener('click', () => {
@@ -528,9 +540,24 @@ function renderList(list, el) {
         if (v && !nameTaken(list, v, x)) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
       },
     }),
-    h('button', { class: 'icon-btn', 'aria-label': 'Move up', disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
-    h('button', { class: 'icon-btn', 'aria-label': 'Move down', disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-    h('button', { class: 'small', onclick: () => { x.archived = !x.archived; save(); renderAll(); } }, x.archived ? 'Restore' : 'Archive'))));
+    // Kept together so that, when the row is too narrow, they wrap as one group under the name.
+    h('div', { class: 'row-actions' },
+      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
+      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
+      // Hidden items leave the Log screen / trigger row; their history stays.
+      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; save(); renderAll(); } },
+        x.archived ? 'Show' : 'Hide')))));
+}
+
+// One line per row only while every name is fully visible; otherwise the whole list
+// switches to name-above-buttons, so rows stay consistent.
+function fitLists() {
+  for (const el of document.querySelectorAll('.list')) {
+    el.classList.remove('stacked');
+    if (el.offsetParent === null) continue; // hidden: measured when Settings is shown
+    const clipped = [...el.querySelectorAll('.list-row input')].some(i => i.scrollWidth > i.clientWidth + 1);
+    el.classList.toggle('stacked', clipped);
+  }
 }
 
 function move(list, i, d) {
@@ -556,6 +583,7 @@ bindAdd($('#add-tag'), db.tags, named);
 function renderSettings() {
   renderList(db.items, $('#items-list'));
   renderList(db.tags, $('#tags-list'));
+  fitLists();
   const days = db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
   // Nag only once there's something worth losing: 30 days since the last export,
   // or (never exported) the oldest entry is over two weeks old.
@@ -661,6 +689,7 @@ function show(view) {
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
   if (view !== 'log') dismissTagRow(); else fitGrid();
+  if (view === 'settings') fitLists();
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
