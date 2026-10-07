@@ -4,14 +4,25 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
-- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month.
+- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month. For an episode item it shows the current episode instead ("Day 3 · tap for today").
 - **History:** every entry, newest first. Tap one to change its item, date/time, tags or note, or to delete it. The **+ Add past entry** button backdates an entry.
 - **Patterns:**
   - Days per item this month and last month.
-  - Weekly bars for the last 12 weeks.
+  - Bars of **days** with each item (not taps), switchable between week (last 12), month (last 12) and year.
+  - For episode items: each flare-up with its dates and length, plus typical length, longest, typical time between episodes, and days since the last one.
   - The most frequent tags for each item.
   - **What comes before it?** for each item, how often it was logged on or just before a symptom day, compared with how often it appears on any day.
 - **Settings:** add, rename, reorder and archive items and tags, plus CSV export and import.
+
+### Episodes
+
+Every item is logged the same way: one tap. Patterns groups days in a row into **episodes**, so a 5-day cold sore shows up as one episode lasting 5 days. Headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for the inhaler, the log count works as a puff count.
+
+**If you log after missing one or two days**, the app asks whether it was still there. **Yes** fills in the missing days, marked "Filled in", so the episode stays whole. **No** keeps them as separate episodes. The app learns: once an item has 3 finished episodes that typically last one day (headaches, drinks), it stops asking about that item.
+
+While an item has been logged for 2 or more days in a row, its button shows "Day 3 · tap for today". Items that have had multi-day runs get an episode list in Patterns, showing length, typical and longest duration, and time between episodes.
+
+**What comes before it?** looks only at the **first day** of each episode. Exposures during day 5 of an outbreak aren't triggers. Cold sores can lag their trigger by several days, so try the ≤ 3 or ≤ 5 day windows for them.
 
 ### Getting real trigger signal
 
@@ -61,6 +72,6 @@ The service worker serves the cached app instantly and fetches updates in the ba
 | --- | --- |
 | `index.html` | Markup for all four screens and the edit dialog |
 | `style.css` | Styles; light/dark mode via `prefers-color-scheme` |
-| `app.js` | Storage, rendering, patterns and CSV (one file, about 500 lines) |
+| `app.js` | Storage, rendering, episodes, patterns and CSV (one file, about 600 lines) |
 | `sw.js` | Offline cache |
 | `manifest.webmanifest`, `*.png` | Install metadata and icons |
