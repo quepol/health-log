@@ -19,7 +19,7 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 Each item is tracked in one of two ways, chosen in Settings:
 
 - **Count days** suits things that come and go within a day, like a headache.
-- **Episodes** suits flare-ups that last several days, like a cold sore or a run of inhaler use. Tap the item **once each day it's active**. Logged days with no more than the item's skip allowance between them (default: 1 day) count as one episode, so forgetting a single day doesn't split an outbreak in two. Multiple taps on one day are fine; for the inhaler, the log count works as a puff count.
+- **Episodes** suits flare-ups that last several days, like a cold sore or a run of inhaler use. Tap the item **once each day it's there**; days in a row are grouped into one episode automatically. If you log after missing one or two days, the app asks whether you forgot. **Yes** fills in the missing days, marked "Filled in", so the episode stays whole. **No** keeps them as separate episodes. Multiple taps on one day are fine; for the inhaler, the log count works as a puff count.
 
 Cold sore and Inhaler start as Episodes, and new items start as Count days.
 
@@ -33,7 +33,7 @@ Tags only get recorded on symptom days. Tags therefore can't tell you whether "p
 
 Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
 
-Item settings (Count/Episodes, skip allowance) aren't in the CSV. After restoring to a new device, set them again in Settings.
+The Count/Episodes setting isn't in the CSV. After restoring to a new device, set them again in Settings.
 
 CSV format: `timestamp,item,tags,note`. Tags are separated by `;`. Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works on import and is read as the device's local time.
 

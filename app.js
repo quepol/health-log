@@ -2,9 +2,8 @@
 
 /* ---------- Storage ----------
  * One JSON blob in localStorage:
- *   items:   [{ id, name, archived, mode, gap }]  (array order = display order)
- *            mode: 'count' (e.g. headache) or 'episodes' (multi-day, e.g. cold sore);
- *            gap: days without a log still counted as the same episode
+ *   items:   [{ id, name, archived, mode }]      (array order = display order)
+ *            mode: 'count' (e.g. headache) or 'episodes' (multi-day, e.g. cold sore)
  *   tags:    [{ id, name, archived }]
  *   entries: [{ id, itemId, ts, tagIds, note }]  (ts = local ISO with UTC offset)
  *   lastExport: ISO string | null
@@ -17,13 +16,13 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 const EPISODIC = ['cold sore', 'inhaler']; // sensible defaults for these names
 const named = name => ({ id: uid(), name, archived: false });
 const defaultMode = name => EPISODIC.includes(name.toLowerCase()) ? 'episodes' : 'count';
-const newItem = name => ({ ...named(name), mode: defaultMode(name), gap: 1 });
+const newItem = name => ({ ...named(name), mode: defaultMode(name) });
 
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(KEY));
     if (d && Array.isArray(d.items)) {
-      for (const it of d.items) { it.mode ??= defaultMode(it.name); it.gap ??= 1; } // pre-episode data
+      for (const it of d.items) { it.mode ??= defaultMode(it.name); delete it.gap; } // older versions
       return d;
     }
   } catch { /* fall through to a fresh store */ }
@@ -63,8 +62,8 @@ const fmtDay = (k, opts) => new Date(k + 'T12:00').toLocaleDateString(undefined,
 const today = () => dayNum(todayKey());
 
 /* ---------- Episodes ----------
- * Logged days of one item, grouped into runs: a day joins the current episode if at most
- * `gap` unlogged days separate it from the episode's last day. Oldest first.
+ * Runs of consecutive logged days of one item, oldest first. A missed day splits a run;
+ * logging after one is caught by the "Did you forget?" prompt on the Log screen.
  */
 function episodesOf(it) {
   const days = new Map(); // dayNum -> { logs, tagIds }
@@ -79,7 +78,7 @@ function episodesOf(it) {
   const eps = [];
   for (const n of [...days.keys()].sort((a, b) => a - b)) {
     const d = days.get(n), last = eps.at(-1);
-    if (last && n - last.end <= it.gap + 1) {
+    if (last && n - last.end === 1) {
       last.end = n;
       last.logs += d.logs;
       d.tagIds.forEach(t => last.tagIds.add(t));
@@ -88,8 +87,8 @@ function episodesOf(it) {
   return eps;
 }
 const epLength = ep => ep.end - ep.start + 1;
-// Still open: a log today would extend it.
-const isOngoing = (it, ep) => ep && today() - ep.end <= it.gap + 1;
+// Still open: logged today or yesterday.
+const isOngoing = ep => ep && today() - ep.end <= 1;
 
 /* ---------- Tiny DOM helper ---------- */
 const $ = s => document.querySelector(s);
@@ -130,6 +129,7 @@ const hideToast = () => { $('#toast').hidden = true; };
 
 /* ---------- Log view ---------- */
 let lastLoggedId = null;
+let gapAsk = null; // { itemId, missing: [dayNum] } when an episode log skipped a day or two
 
 function renderLog() {
   const month = todayKey().slice(0, 7);
@@ -138,7 +138,7 @@ function renderLog() {
     let sub, ongoing = false;
     if (it.mode === 'episodes') {
       const last = episodesOf(it).at(-1);
-      ongoing = isOngoing(it, last);
+      ongoing = isOngoing(last);
       sub = ongoing ? `Day ${today() - last.start + 1} · ${last.end === today() ? 'logged today' : 'tap for today'}`
         : last ? `Last ended ${plural(today() - last.end, 'day')} ago` : 'No episodes yet';
     } else {
@@ -158,6 +158,7 @@ function logNow(itemId) {
   save();
   navigator.vibrate?.(15);
   lastLoggedId = e.id;
+  gapAsk = missedDays(itemById(itemId));
   renderAll();
   toast(`Logged ${itemById(itemId).name} · ${eTime(e)}`, [
     ['Undo', () => removeEntry(e.id)],
@@ -176,11 +177,49 @@ function renderTagRow() {
     save();
   })));
 }
-const dismissTagRow = () => { lastLoggedId = null; renderTagRow(); };
+const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
+
+// First episode log of today after a 1–2 day gap: those days may just have been forgotten.
+function missedDays(it) {
+  if (it.mode !== 'episodes') return null;
+  const t = today();
+  const mine = db.entries.filter(e => e.itemId === it.id).map(e => dayNum(eDay(e)));
+  if (mine.filter(n => n === t).length > 1) return null; // already asked at today's first log
+  const days = new Set(mine);
+  if (days.has(t - 1)) return null;
+  const missing = days.has(t - 2) ? [t - 1] : days.has(t - 3) ? [t - 2, t - 1] : null;
+  return missing && { itemId: it.id, missing };
+}
+
+function renderGapAsk() {
+  const card = $('#gapask');
+  card.hidden = !gapAsk;
+  if (!gapAsk) return;
+  const it = itemById(gapAsk.itemId);
+  const names = gapAsk.missing.map(n => fmtDay(numDay(n), { weekday: 'short', month: 'short', day: 'numeric' })).join(' or ');
+  const close = () => { gapAsk = null; renderGapAsk(); };
+  card.replaceChildren(
+    h('p', {}, `No ${it.name} logged ${names}. Was it still there?`),
+    h('div', { class: 'row' },
+      h('button', {
+        class: 'primary', onclick: () => {
+          const { missing } = gapAsk;
+          for (const n of missing) {
+            const [y, m, d] = numDay(n).split('-').map(Number);
+            db.entries.push({ id: uid(), itemId: it.id, ts: isoLocal(new Date(y, m - 1, d, 12)), tagIds: [], note: 'Filled in' });
+          }
+          save();
+          close();
+          renderAll();
+          toast(`Added ${plural(missing.length, 'day')} to this ${it.name} episode`);
+        },
+      }, gapAsk.missing.length > 1 ? 'Yes, add them' : 'Yes, add it'),
+      h('button', { class: 'secondary', onclick: close }, 'No')));
+}
 
 function removeEntry(id) {
   db.entries = db.entries.filter(e => e.id !== id);
-  if (lastLoggedId === id) lastLoggedId = null;
+  if (lastLoggedId === id) { lastLoggedId = null; gapAsk = null; }
   save();
   renderAll();
 }
@@ -362,7 +401,7 @@ const median = xs => {
 function episodeSection(it) {
   const eps = episodesOf(it);
   if (!eps.length) return null;
-  const last = eps.at(-1), ongoing = isOngoing(it, last);
+  const last = eps.at(-1), ongoing = isOngoing(last);
   const done = ongoing ? eps.slice(0, -1) : eps; // an open episode's length isn't known yet
   const between = eps.slice(1).map((ep, i) => ep.start - eps[i].end - 1);
   const thisYear = todayKey().slice(0, 4);
@@ -461,13 +500,10 @@ function renderList(list, el, extra) {
 
 // Second line of an item row: how to track it.
 function itemOptions(it) {
-  const update = (key, v) => { it[key] = v; save(); renderAll(); };
   return h('div', { class: 'list-sub' },
-    h('select', { 'aria-label': `How to track ${it.name}`, onchange: ev => update('mode', ev.target.value) },
-      [['count', 'Count days'], ['episodes', 'Episodes']]
-        .map(([v, l]) => h('option', { value: v, selected: it.mode === v }, l))),
-    it.mode === 'episodes' && h('select', { 'aria-label': `Days without a log allowed inside one ${it.name} episode`, onchange: ev => update('gap', +ev.target.value) },
-      [0, 1, 2, 3, 7].map(g => h('option', { value: g, selected: it.gap === g }, g ? `Skip ≤ ${plural(g, 'day')}` : 'No skipped days'))));
+    h('select', { 'aria-label': `How to track ${it.name}`, onchange: ev => { it.mode = ev.target.value; save(); renderAll(); } },
+      [['count', 'Count days'], ['episodes', 'Episodes (several days in a row)']]
+        .map(([v, l]) => h('option', { value: v, selected: it.mode === v }, l))));
 }
 function move(list, i, d) {
   [list[i], list[i + d]] = [list[i + d], list[i]];
@@ -604,6 +640,7 @@ $('#tagrow-close').addEventListener('click', dismissTagRow);
 
 function renderAll() {
   renderLog();
+  renderGapAsk();
   renderTagRow();
   renderHistory();
   renderPatterns();
@@ -612,7 +649,7 @@ function renderAll() {
 
 // Coming back to the app later: refresh "this month" counts, drop the stale trigger row.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { lastLoggedId = null; renderAll(); }
+  if (document.visibilityState === 'visible') { lastLoggedId = null; gapAsk = null; renderAll(); }
 });
 // Another open tab changed the data.
 addEventListener('storage', ev => {

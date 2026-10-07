@@ -100,6 +100,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   margin-top: 1rem; padding: .75rem;
   border-radius: 16px; background: var(--surface); border: 1px solid var(--border);
 }
+.gapask { border: 2px solid var(--accent); }
+.gapask p { margin: 0 0 .6rem; font-weight: 600; }
 .tagrow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .chip { min-height: 44px; border-radius: 999px; background: var(--surface-2); border-color: transparent; }
