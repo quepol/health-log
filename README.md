@@ -4,7 +4,7 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
-- **First launch:** on a device with no data, a one-screen setup asks **What do you want to keep track of?** It suggests Headache, Heartburn, Back pain and Exercise, and you can add your own. Below that are **details**: a way to note what else was going on when you log something. Stress, Poor sleep and Dehydrated are suggested (nothing pre-selected), and you can add your own. On an iPhone in the browser it first asks you to add the app to the Home Screen and set it up from there.
+- **First launch:** on a device with no data, a one-screen setup asks **What do you want to keep track of?** It suggests Headache, Back pain and Exercise, and you can add your own. Below that are **details**: a way to note what else was going on when you log something. Stress, Poor sleep and Dehydrated are suggested (nothing pre-selected), and you can add your own. On an iPhone in the browser it first asks you to add the app to the Home Screen and set it up from there.
 
 - **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of details appears, which you can tap or ignore. That row also has an **Edit details** link to Settings. Each button shows how many days you've logged it this month, or the current run while one is going ("Day 3 · tap for today"). The last tile, **＋ Add new**, adds a button right there.
 - **History:** every entry, newest first. Tap one to change its button, date, time, details or note, or to delete it. The **+ Add past entry** button backdates an entry.
