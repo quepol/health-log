@@ -9,6 +9,8 @@
  */
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
+// Of the trigger tags, only these start selected: a short list is less daunting.
+const STARTER_TAGS = ['Poor sleep', 'Stress'];
 const SUGGESTED_ITEMS = ['Headache', 'Migraine', 'Heartburn', 'Nausea', 'Back pain', 'Allergies', 'Anxiety', 'Fatigue', 'Period'];
 const SEED_TAGS = ['Poor sleep', 'Stress', 'Alcohol', 'Period', 'Weather change', 'Sick', 'Other'];
 
@@ -144,7 +146,33 @@ function renderLog() {
       h('span', {}, it.name),
       h('span', { class: 'sub' }, sub));
   }));
-  if (!items.length) $('#grid').append(h('p', { class: 'empty' }, 'No items yet. Add some in Settings.'));
+  $('#grid').append(addTile());
+}
+
+// Last tile in the grid: tap to type a new item right there.
+function addTile() {
+  const tile = h('button', { class: 'log-btn add-tile', 'aria-label': 'Add a new item to track' }, h('span', {}, '＋ Add new'));
+  tile.addEventListener('click', () => {
+    const form = h('form', { class: 'log-btn add-tile add-form' },
+      h('input', { name: 'name', placeholder: 'e.g. Heartburn', 'aria-label': 'New item name', autocomplete: 'off' }),
+      h('div', { class: 'row' },
+        h('button', { class: 'primary small' }, 'Add'),
+        h('button', { type: 'button', class: 'secondary small', onclick: renderLog }, 'Cancel')));
+    form.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const v = cleanName(form.elements.name.value);
+      if (!v) return form.elements.name.focus();
+      const existing = db.items.find(x => x.name.toLowerCase() === v.toLowerCase());
+      if (existing && !existing.archived) return toast(`“${v}” is already here`);
+      if (existing) existing.archived = false; else db.items.push(named(v));
+      save();
+      renderAll();
+      toast(`Added ${v}`);
+    });
+    tile.replaceWith(form);
+    form.elements.name.focus();
+  });
+  return tile;
 }
 
 function logNow(itemId) {
@@ -626,6 +654,11 @@ function show(view) {
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
 document.querySelectorAll('.add-past').forEach(b => b.addEventListener('click', () => openEdit(null)));
 $('#tagrow-close').addEventListener('click', dismissTagRow);
+$('#tagrow-edit').addEventListener('click', () => {
+  show('settings');
+  $('#tags-heading').scrollIntoView();
+  scrollBy(0, -80); // clear the sticky header
+});
 
 function renderAll() {
   renderLog();
@@ -657,7 +690,8 @@ function onboard() {
   const names = [...SUGGESTED_ITEMS];
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
-  const tags = new Set(SEED_TAGS);
+  const tagNames = [...SEED_TAGS];
+  const tags = new Set(STARTER_TAGS);
 
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
@@ -667,7 +701,16 @@ function onboard() {
     $('#ob-start').disabled = !picked.size;
   };
   renderItems();
-  $('#ob-tags').replaceChildren(...SEED_TAGS.map(t => chip(t, true, on => on ? tags.add(t) : tags.delete(t))));
+  const renderTags = () => $('#ob-tags').replaceChildren(...tagNames.map(t => chip(t, tags.has(t), on => on ? tags.add(t) : tags.delete(t))));
+  renderTags();
+  $('#ob-tag-add').addEventListener('submit', ev => {
+    ev.preventDefault();
+    const v = cleanName(ev.target.elements.name.value);
+    if (!v) return;
+    tags.add(tagNames.find(n => sameName(n, v)) || (tagNames.push(v), v));
+    ev.target.reset();
+    renderTags();
+  });
 
   $('#ob-add').addEventListener('submit', ev => {
     ev.preventDefault();
@@ -680,7 +723,7 @@ function onboard() {
   });
 
   // Mutate in place: the Settings add-forms hold references to these arrays.
-  const addTags = () => db.tags.push(...SEED_TAGS.filter(t => tags.has(t) && !db.tags.some(x => sameName(x.name, t))).map(named));
+  const addTags = () => db.tags.push(...tagNames.filter(t => tags.has(t) && !db.tags.some(x => sameName(x.name, t))).map(named));
   const done = () => {
     addTags();
     save();

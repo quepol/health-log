@@ -72,6 +72,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .danger { color: var(--danger); border-color: var(--danger); background: transparent; }
 .link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; padding: 0; margin-top: 1rem; }
 .danger-link { color: var(--danger); }
+.small-link { margin-top: .6rem; font-size: .9rem; min-height: 44px; }
+.log-btn.add-tile { border-style: dashed; color: var(--accent); background: transparent; }
+.add-form { gap: .5rem; }
+.add-form input { min-height: 44px; font-size: 1rem; font-weight: 400; color: var(--text); }
+.add-form .row { justify-content: center; }
 #ob-import { display: block; width: 100%; text-align: center; line-height: 1.4; }
 .danger-solid { background: var(--danger); border-color: var(--danger); color: var(--bg); font-weight: 700; }
 .wipe { margin-top: .75rem; border-color: var(--danger); }

@@ -4,9 +4,9 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
-- **First launch:** on a device with no data, a one-screen setup asks **What do you want to track?** It suggests Headache, Migraine, Heartburn, Nausea, Back pain, Allergies, Anxiety, Fatigue and Period, and you can add your own. It also lets you pick which trigger tags to offer. On an iPhone in Safari it first asks you to add the app to the Home Screen and set it up from there.
+- **First launch:** on a device with no data, a one-screen setup asks **What do you want to track?** It suggests Headache, Migraine, Heartburn, Nausea, Back pain, Allergies, Anxiety, Fatigue and Period, and you can add your own. Below that is a list of trigger tags: Poor sleep and Stress start selected, the others are one tap away, and you can add your own. On an iPhone in the browser it first asks you to add the app to the Home Screen and set it up from there.
 
-- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month. For an episode item it shows the current episode instead ("Day 3 · tap for today").
+- **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. That row also has an **Edit triggers** link to Settings. Each button shows how many days you've logged that item this month, or the current run while one is going ("Day 3 · tap for today"). The last tile, **＋ Add new**, adds an item right there.
 - **History:** every entry, newest first. Tap one to change its item, date/time, tags or note, or to delete it. The **+ Add past entry** button backdates an entry.
 - **Patterns:**
   - Days per item this month and last month.
