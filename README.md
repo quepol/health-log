@@ -4,7 +4,7 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
-- **First launch:** on a device with no data, a one-screen setup asks **What do you want to track?** It suggests Headache, Migraine, Heartburn, Nausea, Back pain, Allergies, Anxiety, Low mood, Fatigue and Period, and you can add your own. It also lets you pick which trigger tags to offer. On an iPhone in Safari it first asks you to add the app to the Home Screen and set it up from there.
+- **First launch:** on a device with no data, a one-screen setup asks **What do you want to track?** It suggests Headache, Migraine, Heartburn, Nausea, Back pain, Allergies, Anxiety, Fatigue and Period, and you can add your own. It also lets you pick which trigger tags to offer. On an iPhone in Safari it first asks you to add the app to the Home Screen and set it up from there.
 
 - **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month. For an episode item it shows the current episode instead ("Day 3 · tap for today").
 - **History:** every entry, newest first. Tap one to change its item, date/time, tags or note, or to delete it. The **+ Add past entry** button backdates an entry.
@@ -32,7 +32,7 @@ Tags only get recorded on symptom days. Tags therefore can't tell you whether "p
 
 ## Back up your data
 
-**Settings → Delete all data…** erases everything on the device, after a confirmation step, and returns to the first-launch setup.
+**Settings → Delete all data** erases everything on the device, after a confirmation step, and returns to the first-launch setup.
 
 Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
 

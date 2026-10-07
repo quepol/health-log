@@ -72,6 +72,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .danger { color: var(--danger); border-color: var(--danger); background: transparent; }
 .link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; padding: 0; margin-top: 1rem; }
 .danger-link { color: var(--danger); }
+#ob-import { text-align: left; line-height: 1.4; }
 .danger-solid { background: var(--danger); border-color: var(--danger); color: var(--bg); font-weight: 700; }
 .wipe { margin-top: .75rem; border-color: var(--danger); }
 .wipe p { margin: 0 0 .6rem; }
