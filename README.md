@@ -114,8 +114,8 @@ All paths are relative, so it works from a sub-path. Netlify Drop and Cloudflare
 
 ## Updating
 
-- **How updates arrive:** the service worker serves the cached app instantly and fetches updates in the background, so a pushed change takes effect the *second* time the app is opened.
-- **Cache version:** bump `VERSION` in `sw.js` with each release.
+- **How updates arrive:** the app opens instantly from its saved copy, then checks for a new version (at launch and whenever it comes back to the foreground). If one arrives before you've touched anything, it reloads once to show it. If you've already started tapping, it waits until next time. iPhone sometimes resumes a recently used app instead of relaunching it; closing it from the app switcher forces a fresh launch.
+- **Cache version:** bump `VERSION` in `sw.js` with each release. A changed `sw.js` is how the app notices an update.
 - **Adding or removing files:** also update the `FILES` list in `sw.js`.
 
 ## Files

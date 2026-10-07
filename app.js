@@ -819,4 +819,25 @@ navigator.storage?.persist?.().then(ok => {
   $('#storage-status').textContent = ok ? 'Storage is marked persistent.' : 'Browser may clear storage under pressure: export regularly.';
 }).catch(() => {});
 
-if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+/* Updates: the app opens instantly from its saved copy and checks for a new version at launch
+ * and whenever it comes back to the foreground. If one arrives before the person has touched
+ * anything (within 10 seconds), reload once to show it; otherwise it applies next time. */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  const sw = navigator.serviceWorker;
+  const hadController = !!sw.controller; // first-ever visit: installing isn't an update
+  let shownAt = Date.now(), touched = false;
+  addEventListener('pointerdown', () => { touched = true; }, true);
+  addEventListener('keydown', () => { touched = true; }, true);
+  sw.addEventListener('controllerchange', () => {
+    if (hadController && !touched && Date.now() - shownAt < 10000) location.reload();
+  });
+  sw.register('sw.js').then(reg => {
+    reg.update().catch(() => {}); // register() alone doesn't re-check an existing worker
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      shownAt = Date.now();
+      touched = false;
+      reg.update().catch(() => {});
+    });
+  }).catch(() => {});
+}

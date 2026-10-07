@@ -1,12 +1,16 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
-// Bump VERSION when files are added or removed.
-const VERSION = 'v18';
+// Bump VERSION with every release: a changed sw.js is how the app notices an update.
+const VERSION = 'v19';
 const CACHE = `healthlog-${VERSION}`;
 const FILES = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's HTTP cache (GitHub Pages allows 10 minutes), so a new
+  // version installs the new files rather than recently downloaded old ones.
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
