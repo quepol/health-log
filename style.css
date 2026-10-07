@@ -80,7 +80,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .add-form { gap: .5rem; }
 .add-form input { min-height: 2.75rem; font-size: max(1rem, 16px); font-weight: 400; color: var(--text); }
 .add-form .row { justify-content: center; }
-#ob-import { display: block; width: 100%; text-align: center; line-height: 1.4; }
+#ob-import { display: block; width: 100%; text-align: center; line-height: 1.4; margin-top: 2rem; font-size: .9rem; }
 .danger-solid { background: var(--danger); border-color: var(--danger); color: var(--bg); font-weight: 700; }
 .wipe { margin-top: .75rem; border-color: var(--danger); }
 .wipe p { margin: 0 0 .6rem; }

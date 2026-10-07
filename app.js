@@ -12,7 +12,7 @@ const KEY = 'healthlog.v1';
 // Of the trigger tags, only these start selected: a short list is less daunting.
 const STARTER_TAGS = ['Poor sleep', 'Stress'];
 const SUGGESTED_ITEMS = ['Headache', 'Migraine', 'Heartburn', 'Nausea', 'Back pain', 'Allergies', 'Anxiety', 'Fatigue', 'Period'];
-const SEED_TAGS = ['Poor sleep', 'Stress', 'Alcohol', 'Period', 'Weather change', 'Sick', 'Other'];
+const SEED_TAGS = ['Poor sleep', 'Stress', 'Caffeine'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const named = name => ({ id: uid(), name, archived: false });
