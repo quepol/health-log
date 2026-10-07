@@ -2,7 +2,6 @@
   "name": "Health Log",
   "short_name": "Health Log",
   "description": "One-tap symptom and trigger tracker. Data stays on your device.",
-  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b1120",

@@ -4,6 +4,8 @@ A one-tap symptom tracker. It's a static PWA written in plain HTML, CSS and JS: 
 
 ## What it does
 
+- **First launch:** on a device with no data, a one-screen setup asks **What do you want to track?** It suggests Headache, Migraine, Heartburn, Nausea, Back pain, Allergies, Anxiety, Fatigue and Period, and you can add your own. It also lets you pick which trigger tags to offer. On an iPhone in Safari it first asks you to add the app to the Home Screen and set it up from there.
+
 - **Log:** tap a big button to log it with the current time. A toast lets you **Undo** or **Edit**, and an optional row of trigger tags appears, which you can tap or ignore. Each button shows how many days you've logged that item this month. For an episode item it shows the current episode instead ("Day 3 · tap for today").
 - **History:** every entry, newest first. Tap one to change its item, date/time, tags or note, or to delete it. The **+ Add past entry** button backdates an entry.
 - **Patterns:**
@@ -30,6 +32,8 @@ Tags only get recorded on symptom days. Tags therefore can't tell you whether "p
 
 ## Back up your data
 
+**Settings → Delete all data** erases everything on the device, after a confirmation step, and returns to the first-launch setup.
+
 Data lives only on the device, and Safari can clear website storage. Apps added to the Home Screen are mostly exempt, but Apple doesn't guarantee it. Use **Settings → Export CSV** regularly; on iPhone it opens the share sheet so you can save to Files or iCloud Drive. The Settings tab shows an orange dot when a backup is overdue. Importing the same file twice won't create duplicates.
 
 CSV format: `timestamp,item,tags,note`. Tags are separated by `;`. Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works on import and is read as the device's local time.
@@ -53,6 +57,18 @@ To try it on your phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`.
 3. After a minute the app is live at `https://<username>.github.io/<repo>/`.
 
 All paths are relative, so the app works from a sub-path like that. Netlify Drop and Cloudflare Pages also work: drag the folder in.
+
+## Sharing with family
+
+Everyone uses the same link on their own phone, and each person's data stays on that phone. To pre-select what someone tracks, add `?track=` to the link, for example:
+
+```
+https://<username>.github.io/<repo>/?track=Heartburn,Spicy+food,Coffee
+```
+
+Names that match a suggestion get pre-selected; any others are added as their own items. They can still change the selection before tapping **Start logging**.
+
+The setup has to happen inside the Home Screen app, because iPhone keeps that app's data separate from Safari's. For the pre-selection to carry over, the Home Screen icon has to keep the link's `?track=` part. The manifest leaves `start_url` unset so that iOS keeps it, but this hasn't been verified on a real device. If it doesn't carry over, the setup screen simply opens with nothing selected.
 
 ## Install on iPhone
 
