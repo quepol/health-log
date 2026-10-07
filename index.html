@@ -25,7 +25,7 @@
     <section id="view-onboard" class="view" hidden>
       <div id="install-hint" class="card" hidden>
         <h2>Health Log</h2>
-        <p>Track symptoms like headaches with one tap and spot what triggers them.
+        <p>Track headaches, exercise or anything else about your health with one tap, and spot patterns over time.
           Free, no account, and your data stays on your phone.</p>
         <h3>Install it in 3 steps</h3>
         <ol class="steps">
@@ -39,21 +39,21 @@
         <button id="install-skip" class="link-btn small-link">Continue in browser instead</button>
       </div>
       <div id="picker">
-        <h2>What do you want to track?</h2>
-        <p class="hint">Pick what applies to you. Each one becomes a button you tap when it happens.
-          You can change these any time in <strong>Settings → Items</strong>.</p>
+        <h2>What do you want to keep track of?</h2>
+        <p class="hint">Symptoms, exercise, anything you want to keep an eye on. Each one becomes a button
+          you tap when it happens. You can change these any time in <strong>Settings → Your buttons</strong>.</p>
         <div id="ob-items" class="chips"></div>
         <form id="ob-add" class="add-row">
           <input name="name" placeholder="Add your own" autocomplete="off">
           <button class="secondary">Add</button>
         </form>
-        <h2>Possible triggers</h2>
-        <p class="hint">After you log something, your triggers appear so you can tap any that apply.
+        <h2>Details you can add</h2>
+        <p class="hint">After you tap a button, you can add details like these.
           We’ve started you with two. Tap to add or remove, or type your own below.
-          You can change them any time in <strong>Settings → Trigger tags</strong>.</p>
+          You can change them any time in <strong>Settings → Details</strong>.</p>
         <div id="ob-tags" class="chips"></div>
         <form id="ob-tag-add" class="add-row">
-          <input name="name" placeholder="Add your own trigger" autocomplete="off">
+          <input name="name" placeholder="Add your own detail" autocomplete="off">
           <button class="secondary">Add</button>
         </form>
         <button id="ob-start" class="primary ob-start">Start logging</button>
@@ -67,10 +67,10 @@
       <div id="tagrow" class="tagrow" hidden>
         <div class="tagrow-head">
           <span id="tagrow-label"></span>
-          <button id="tagrow-close" class="icon-btn" aria-label="Dismiss triggers">×</button>
+          <button id="tagrow-close" class="icon-btn" aria-label="Skip details">×</button>
         </div>
         <div id="tagrow-chips" class="chips"></div>
-        <button id="tagrow-edit" class="link-btn small-link">Edit triggers</button>
+        <button id="tagrow-edit" class="link-btn small-link">Edit details</button>
       </div>
       <button class="link-btn add-past">+ Add past entry</button>
     </section>
@@ -85,16 +85,17 @@
     </section>
 
     <section id="view-settings" class="view" hidden>
-      <h2>Items</h2>
+      <h2>Your buttons</h2>
       <div id="items-list" class="list"></div>
       <form id="add-item" class="add-row">
         <input name="name" placeholder="e.g. Heartburn" required autocomplete="off">
         <button class="primary">Add</button>
       </form>
-      <p class="hint">Tip: log exposures (Alcohol, Bad sleep, Skipped meal…) as items too.
-        Patterns can then check which of them tend to come before a symptom.</p>
+      <p class="hint">Track anything you're curious about, not just symptoms: exercise, medicine, a late meal.
+        Tap it each time it happens. To see whether something tends to come before something else,
+        make it a button rather than a detail.</p>
 
-      <h2 id="tags-heading">Trigger tags</h2>
+      <h2 id="tags-heading">Details</h2>
       <div id="tags-list" class="list"></div>
       <form id="add-tag" class="add-row">
         <input name="name" placeholder="New tag" required autocomplete="off">
@@ -142,7 +143,7 @@
         <label>Time <input type="time" id="f-time" required></label>
       </div>
       <fieldset>
-        <legend>Triggers</legend>
+        <legend>Details</legend>
         <div id="f-tags" class="chips"></div>
       </fieldset>
       <label>Note <textarea id="f-note" rows="2"></textarea></label>

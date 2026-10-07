@@ -10,9 +10,9 @@
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
 // Of the trigger tags, only these start selected: a short list is less daunting.
-const STARTER_TAGS = ['Poor sleep', 'Stress'];
-const SUGGESTED_ITEMS = ['Headache', 'Migraine', 'Heartburn', 'Nausea', 'Back pain', 'Allergies', 'Anxiety', 'Fatigue', 'Period'];
-const SEED_TAGS = ['Poor sleep', 'Stress', 'Caffeine'];
+const STARTER_TAGS = ['Stress', 'Poor sleep'];
+const SUGGESTED_ITEMS = ['Headache', 'Heartburn', 'Back pain', 'Exercise'];
+const SEED_TAGS = ['Stress', 'Poor sleep', 'Dehydrated'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const named = name => ({ id: uid(), name, archived: false });
@@ -213,7 +213,7 @@ function renderTagRow() {
   const tags = active(db.tags);
   $('#tagrow').hidden = !e || !tags.length;
   if ($('#tagrow').hidden) return;
-  $('#tagrow-label').textContent = `Triggers for ${itemById(e.itemId).name}?`;
+  $('#tagrow-label').textContent = `Add details to ${itemById(e.itemId).name}?`;
   $('#tagrow-chips').replaceChildren(...tags.map(t => chip(t.name, e.tagIds.includes(t.id), on => {
     e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
     save();
@@ -388,27 +388,27 @@ function scaleSwitch() {
     }, s[0].toUpperCase() + s.slice(1))));
 }
 
-/* Chart periods for the current scale, oldest first: { from, to (dayNums, inclusive), label }. */
+/* Chart periods for the current scale, oldest first: { from, to (dayNums, inclusive), top, bottom }.
+ * Labels are two short lines, e.g. "Sep" over "7" (week) or "Jan" over "’26" (month), so they fit 12 across. */
 function periods() {
   const t = today(), [ty, tm] = todayKey().split('-').map(Number);
   if (scale === 'week') {
     const monday = t - (new Date(t * 864e5).getUTCDay() + 6) % 7;
     return Array.from({ length: 12 }, (_, i) => {
       const from = monday - (11 - i) * 7, k = numDay(from), d = +k.slice(8);
-      return { from, to: from + 6, label: i === 0 || d <= 7 ? fmtDay(k, { month: 'short', day: 'numeric' }) : String(d) };
+      return { from, to: from + 6, top: i === 0 || d <= 7 ? fmtDay(k, { month: 'short' }) : '', bottom: String(d) };
     });
   }
   if (scale === 'month') {
     return Array.from({ length: 12 }, (_, i) => {
       const m = ty * 12 + tm - 1 - (11 - i), y = Math.floor(m / 12), mo = m % 12;
       const from = Date.UTC(y, mo, 1) / 864e5, to = Date.UTC(y, mo + 1, 1) / 864e5 - 1;
-      const name = fmtDay(numDay(from), { month: 'short' });
-      return { from, to, label: i === 0 || mo === 0 ? `${name} ’${String(y).slice(2)}` : name };
+      return { from, to, top: fmtDay(numDay(from), { month: 'short' }), bottom: i === 0 || mo === 0 ? `’${String(y).slice(2)}` : '' };
     });
   }
   const firstYear = Math.max(ty - 9, Math.min(...db.entries.map(e => +e.ts.slice(0, 4))));
   return Array.from({ length: ty - firstYear + 1 }, (_, i) => ({
-    from: Date.UTC(firstYear + i, 0, 1) / 864e5, to: Date.UTC(firstYear + i + 1, 0, 1) / 864e5 - 1, label: String(firstYear + i),
+    from: Date.UTC(firstYear + i, 0, 1) / 864e5, to: Date.UTC(firstYear + i + 1, 0, 1) / 864e5 - 1, top: String(firstYear + i), bottom: '',
   }));
 }
 
@@ -425,7 +425,7 @@ function itemCard(it, entries) {
       return h('div', { class: 'col' },
         h('span', { class: 'v' }, c || ''),
         h('div', { class: 'track' }, bar),
-        h('span', { class: 'x' }, ps[i].label));
+        h('span', { class: 'x' }, h('span', {}, ps[i].top || '\u00a0'), ps.some(p => p.bottom) && h('span', {}, ps[i].bottom || '\u00a0')));
     }));
 
   const tagCounts = new Map();
@@ -436,11 +436,11 @@ function itemCard(it, entries) {
     h('h3', {}, `${it.name} · days per ${scale}`),
     bars,
     episodeSection(it),
-    h('strong', {}, 'Most tagged triggers'),
+    h('strong', {}, 'Most common details'),
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
           h('li', {}, `${tagById(id).name}: ${n} (${Math.round((n / entries.length) * 100)}% of entries)`)))
-      : h('p', { class: 'hint' }, 'No tags yet.'));
+      : h('p', { class: 'hint' }, 'No details yet.'));
 }
 
 const median = xs => {
@@ -482,8 +482,8 @@ function episodeSection(it) {
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
-    return h('div', { class: 'card' }, h('h3', {}, 'What comes before it?'),
-      h('p', { class: 'hint' }, 'Log exposures like Alcohol or Bad sleep as their own items, and this will compare them against your symptom days.'));
+    return h('div', { class: 'card' }, h('h3', {}, 'What tends to come before it?'),
+      h('p', { class: 'hint' }, 'Track a few things as buttons, like Exercise or a late meal, and this will show which ones tend to come before your symptoms.'));
   }
   if (!withData.some(it => it.id === precede.symptomId)) precede.symptomId = withData[0].id;
 
@@ -510,9 +510,9 @@ function precedeCard(items) {
   const enough = symptomDays.length >= 5;
 
   return h('div', { class: 'card' },
-    h('h3', {}, 'What comes before it?'),
+    h('h3', {}, 'What tends to come before it?'),
     h('div', { class: 'controls' },
-      h('select', { 'aria-label': 'Symptom', onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
+      h('select', { 'aria-label': 'Compare against', onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
         withData.map(it => h('option', { value: it.id, selected: it.id === sym.id }, it.name))),
       h('select', { 'aria-label': 'Window', onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
         [[0, 'Same day'], [1, '≤ 1 day before'], [2, '≤ 2 days before'], [3, '≤ 3 days before'], [5, '≤ 5 days before']]
@@ -522,9 +522,9 @@ function precedeCard(items) {
     rows.map(r => h('div', { class: 'precede-row' + (enough && r.hit >= 3 && r.lift >= 1.5 ? ' strong' : '') },
       h('div', {}, h('strong', {}, r.it.name), ' ', h('span', { class: 'lift' }, r.pB ? `${r.lift.toFixed(1)}×` : '–')),
       h('div', { class: 'meta' }, `Before ${pct(r.pS)} of ${unit}s (${r.hit}/${symptomDays.length}) vs ${pct(r.pB)} of all days`))),
-    h('p', { class: 'hint' }, '“2.0×” means it shows up before symptom days twice as often as on a typical day. ' +
-      'Correlation, not proof, and it only works if you log the exposure every time, not just on bad days. ' +
-      'Trigger tags can’t be compared this way because they’re only recorded on symptom entries.'));
+    h('p', { class: 'hint' }, '“2.0×” means it shows up beforehand twice as often as on a typical day. ' +
+      'Correlation, not proof, and it only works if you tap it every time it happens, not just on bad days. ' +
+      'Details can’t be compared this way, because they’re only recorded alongside another button.'));
 }
 
 /* ---------- Settings view ---------- */
@@ -802,7 +802,7 @@ function onboard() {
 /* ---------- Delete all data ---------- */
 $('#wipe').addEventListener('click', () => {
   const n = db.entries.length;
-  $('#wipe-detail').textContent = `This erases ${n} ${n === 1 ? 'entry' : 'entries'}, your items and your trigger tags. ` +
+  $('#wipe-detail').textContent = `This erases ${n} ${n === 1 ? 'entry' : 'entries'}, your buttons and your details. ` +
     (n && !db.lastExport ? 'You have never exported a backup. ' : '') + 'It can’t be undone; export a CSV first if you might want them back.';
   $('#wipe').hidden = true;
   $('#wipe-confirm').hidden = false;
