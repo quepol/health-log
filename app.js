@@ -120,8 +120,8 @@ function chip(label, pressed, onToggle) {
 let toastTimer;
 function toast(msg, actions = []) {
   const t = $('#toast');
-  t.replaceChildren(h('span', {}, msg), actions.length ? h('div', { class: 'toast-actions' }, actions.map(([label, fn]) =>
-    h('button', { onclick: () => { hideToast(); fn(); } }, label))) : null);
+  const buttons = actions.map(([label, fn]) => h('button', { onclick: () => { hideToast(); fn(); } }, label));
+  t.replaceChildren(h('span', {}, msg), ...(buttons.length ? [h('div', { class: 'toast-actions' }, buttons)] : []));
   t.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(hideToast, 6000);
