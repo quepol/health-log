@@ -103,10 +103,14 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 /* Log grid */
 .grid {
   display: grid; gap: .75rem;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  /* At least two across on a phone (a column never needs more than half the width), more on wide
+   * screens. app.js switches to .one-col only when a word no longer fits in a half-width button. */
+  grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, calc(50% - .375rem)), 1fr));
 }
+.grid.one-col { grid-template-columns: 1fr; }
+.grid.one-col .log-btn { overflow-wrap: anywhere; } /* last resort for a very long word */
 .log-btn {
-  min-height: 7rem; padding: .75rem;
+  min-width: 0; min-height: 7rem; padding: .75rem .4rem;
   display: flex; flex-direction: column; justify-content: center; gap: .25rem;
   border: 2px solid var(--accent); border-radius: 18px;
   background: var(--surface);

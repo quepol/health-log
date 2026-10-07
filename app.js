@@ -147,7 +147,19 @@ function renderLog() {
       h('span', { class: 'sub' }, sub));
   }));
   $('#grid').append(addTile());
+  fitGrid();
 }
+
+// Two columns until a single word (e.g. "Heartburn" at the largest text sizes) can't fit
+// in a half-width button; then one column. Measured, so it adapts to names and text size.
+function fitGrid() {
+  const grid = $('#grid');
+  grid.classList.remove('one-col');
+  if (grid.offsetParent === null) return; // hidden: measure next time it's shown
+  const tooNarrow = [...grid.querySelectorAll('.log-btn > span')].some(s => s.scrollWidth > s.clientWidth + 1);
+  grid.classList.toggle('one-col', tooNarrow);
+}
+addEventListener('resize', fitGrid);
 
 // Last tile in the grid: tap to type a new item right there.
 function addTile() {
@@ -648,7 +660,7 @@ function show(view) {
   }
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
-  if (view !== 'log') dismissTagRow();
+  if (view !== 'log') dismissTagRow(); else fitGrid();
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
