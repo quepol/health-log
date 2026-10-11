@@ -757,7 +757,7 @@ addEventListener('storage', ev => {
 
 /* ---------- Onboarding ----------
  * Shown when this device has no saved data. A link like ?track=Heartburn,Spicy+food
- * pre-selects (or adds) items, so you can send family a ready-made setup.
+ * pre-selects (or adds) items, so a shared link can carry a ready-made setup.
  */
 let finishOnboarding = null; // set while the first-launch picker is showing
 

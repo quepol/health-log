@@ -93,17 +93,23 @@ Data lives only on the device, and browsers can clear website storage. Home Scre
 - `item` is the thing you tracked, and `tags` are its details, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.
 - Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works and is read as the device's local time.
 
-## Sharing with family
+## Share a link
 
-Everyone uses the same link on their own phone; each person's data stays on their phone. To pre-select what someone tracks, add `?track=` to the link:
+Anyone can use the app: send them the link and they open it on their own phone. There's no account to create and nothing to download from an app store. Each person's data stays on their own phone; sharing the link never shares anyone's log.
 
 ```
-https://<username>.github.io/<repo>/?track=Heartburn,Late+meal
+https://<username>.github.io/health-log/
 ```
 
-Names that match a suggestion are pre-selected, and others are added as new ones. They can still change the selection before tapping **Start logging**.
+**A ready-made setup:** add `?track=` to pre-select what they'll track:
 
-For the pre-selection to survive "Add to Home Screen", the icon has to keep the `?track=` part. The manifest leaves `start_url` unset so iOS keeps it, but this hasn't been verified on a real device. If it doesn't carry over, setup just opens with nothing selected.
+```
+https://<username>.github.io/health-log/?track=Heartburn,Late+meal
+```
+
+- Names that match a suggestion are pre-selected, and others are added as new ones. They can still change the selection before tapping **Start logging**.
+- Anyone who sees a pre-filled link can read what's in it, so only include what you're happy for others to see (see [Privacy & security](#privacy--security)).
+- For the pre-selection to survive "Add to Home Screen", the icon has to keep the `?track=` part. The manifest leaves `start_url` unset so iOS keeps it, but this hasn't been verified on a real device. If it doesn't carry over, setup just opens with nothing selected.
 
 ## Install on iPhone
 
