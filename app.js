@@ -601,6 +601,17 @@ function fitLists() {
   }
 }
 
+// Hidden ones sink to the bottom of their list, keeping their order. Done on opening Settings
+// rather than on the tap itself, so a Hide stays where it is and can be undone with Show.
+function sinkHidden() {
+  let changed = false;
+  for (const list of [db.items, db.tags]) {
+    const sorted = [...list.filter(x => !x.archived), ...list.filter(x => x.archived)];
+    if (sorted.some((x, i) => x !== list[i])) { list.splice(0, list.length, ...sorted); changed = true; }
+  }
+  if (changed) { save(); renderAll(); }
+}
+
 function move(list, i, d) {
   [list[i], list[i + d]] = [list[i + d], list[i]];
   save();
@@ -612,7 +623,8 @@ function bindAdd(form, list, make) {
     const v = cleanName(form.elements.name.value);
     if (!v) return;
     if (nameTaken(list, v)) return toast(`“${v}” already exists`);
-    list.push(make(v));
+    const firstHidden = list.findIndex(x => x.archived); // new ones go above the hidden ones
+    list.splice(firstHidden < 0 ? list.length : firstHidden, 0, make(v));
     save();
     form.reset();
     renderAll();
@@ -730,7 +742,7 @@ function show(view) {
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
   if (view !== 'log') dismissTagRow(); else fitGrid();
-  if (view === 'settings') fitLists();
+  if (view === 'settings') { sinkHidden(); fitLists(); }
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));

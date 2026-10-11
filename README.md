@@ -49,7 +49,7 @@ The app has two ideas:
   - The most common details for each thing you track.
   - **What tends to come before it?** compares what you track against each other.
 - **Settings:**
-  - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen, but past entries keep them.
+  - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen, but past entries keep them. Next time you open Settings, they move to the bottom of the list.
   - **Data**: Export CSV, Import CSV, and **Delete all data** (with a confirmation step).
 
 ### Episodes
