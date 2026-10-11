@@ -49,7 +49,7 @@ The app has two ideas:
   - The most common details for each thing you track.
   - **What tends to come before it?** compares what you track against each other.
 - **Settings:**
-  - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen, but past entries keep them. Next time you open Settings, they move to the bottom of the list.
+  - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen and Patterns, but their entries stay in History and exports. Show brings them back. Next time you open Settings, they move to the bottom of the list.
   - **Merge duplicates** by renaming one to the other's name (Headaches → Headache). The app offers to merge them: the entries move over and the renamed one goes.
   - **Delete** appears on hidden rows only, so deleting always takes two deliberate steps. Something never logged is deleted at once, with Undo. Otherwise a confirmation says what goes: deleting something you track deletes its entries too; removing a detail takes it off its entries but keeps them.
   - **Data**: Export CSV, Import CSV, and **Delete all data** (with a confirmation step).

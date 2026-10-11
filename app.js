@@ -386,8 +386,13 @@ let precede = { symptomId: null, window: 1 };
 
 function renderPatterns() {
   const out = $('#patterns');
-  const items = db.items.filter(it => !it.archived || db.entries.some(e => e.itemId === it.id));
-  if (!db.entries.length) return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'));
+  // Hidden things you track (and hidden details) stay out of Patterns, as they do the Log screen.
+  // Their entries are still in History and exports, and Show brings them back here.
+  const items = active(db.items);
+  if (!db.entries.some(e => items.some(it => it.id === e.itemId))) {
+    return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.' +
+      (db.entries.length ? ' Hidden things you track aren’t included.' : '')));
+  }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
   out.replaceChildren(monthSummary(items, byItem), scaleSwitch(),
     ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
@@ -467,7 +472,7 @@ function itemCard(it, entries) {
 
   const tagCounts = new Map();
   for (const e of entries) for (const id of e.tagIds) tagCounts.set(id, (tagCounts.get(id) || 0) + 1);
-  const top = [...tagCounts].filter(([id]) => tagById(id)).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const top = [...tagCounts].filter(([id]) => tagById(id) && !tagById(id).archived).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   return h('div', { class: 'card' },
     h('h3', {}, `${it.name} · days per ${scale}`),
@@ -509,7 +514,7 @@ function episodeSection(it) {
     h('strong', {}, 'Episodes'),
     lines.map(l => h('p', { class: 'ep-stat' }, l)),
     h('ul', { class: 'ep-list' }, recent.map(ep => {
-      const tags = [...ep.tagIds].map(id => tagById(id)?.name).filter(Boolean).join(', ');
+      const tags = [...ep.tagIds].map(id => tagById(id)).filter(t => t && !t.archived).map(t => t.name).join(', ');
       const range = ep.start === ep.end ? fmt(ep.start) : `${fmt(ep.start)} – ${fmt(ep.end)}`;
       const len = ongoing && ep === last ? `day ${today() - ep.start + 1}, ongoing` : plural(epLength(ep), 'day');
       return h('li', {}, h('span', { class: 'ep-range' }, range), ` · ${len} · ${plural(ep.logs, 'log')}`, tags && h('span', { class: 'meta' }, ` · ${tags}`));
