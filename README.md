@@ -12,7 +12,7 @@ Health data is sensitive, so here is plainly what the app does and doesn't prote
 - **No third-party code.** No analytics, ads, fonts, CDNs or libraries. Every file is in this repo, and the policy above only allows the app's own files.
 
 **What it doesn't protect against**
-- **A compromised hosting site or GitHub account.** The app's code is delivered from GitHub Pages and updates install automatically. If this repo or the account behind it were compromised, a malicious update could read your stored data and send it elsewhere; it could also remove the Content-Security-Policy, which lives in the app's own HTML. You are trusting whoever controls the site. A guide to [hosting your own copy](https://github.com/quepol/health-log/issues/16) and [control over updates](https://github.com/quepol/health-log/issues/15) are both planned.
+- **A compromised hosting site or GitHub account.** The app's code is delivered from GitHub Pages and updates install automatically. If this repo or the account behind it were compromised, a malicious update could read your stored data and send it elsewhere; it could also remove the Content-Security-Policy, which lives in the app's own HTML. You are trusting whoever controls the site. To avoid that, you can [host your own copy](#host-your-own-copy); [control over updates](https://github.com/quepol/health-log/issues/15) for the shared copy is planned.
 - **Someone with your unlocked phone.** There's no separate passcode, so anyone who can unlock the phone can open the app and see your log. Your phone's passcode and device encryption are the protection.
 - **Exported backups.** **Export CSV** creates a plain, unencrypted text file. Once you save or share it (Files, iCloud Drive, email), it's protected only by wherever you put it.
 - **Pre-filled links.** A link like `?track=Heartburn` shows what someone is tracking to anyone who sees it, and the hosting site can see it too, because the link loads the page.
@@ -121,13 +121,38 @@ python3 -m http.server 8000
 
 To try it on a phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`. Installing and offline mode need HTTPS, so for real use host it as below.
 
-## Host free on GitHub Pages
+## Host your own copy
 
-1. Push this repo to GitHub. Pages is free for public repos; private repos need a paid plan. The repo contains only code. Health data never leaves the phone.
-2. On GitHub, go to **Settings → Pages → Build and deployment**. Set **Source: Deploy from a branch**, then choose `main` and the `/ (root)` folder, and click **Save**.
-3. After a minute the app is live at `https://<username>.github.io/<repo>/`.
+Using the shared copy means trusting this repo and whoever controls it (see [Privacy & security](#privacy--security)). With your own copy, you only trust your own GitHub account, and the app only changes when you decide.
 
-All paths are relative, so it works from a sub-path. Netlify Drop and Cloudflare Pages also work: drag the folder in.
+### Set it up (free, about 5 minutes)
+
+1. Sign in to GitHub (a free account is fine) and open this repo.
+2. Click **Fork** (top right), then **Create fork**. You now have your own copy at `github.com/<you>/health-log`. Forks of public repos are public, which is fine: the repo only holds code, never anyone's health data.
+3. In your fork, go to **Settings → Pages**. Under **Build and deployment**, set **Source** to **Deploy from a branch**, choose `main` and `/ (root)`, and click **Save**.
+4. After a minute or two, the Pages screen shows **Your site is live at** `https://<you>.github.io/health-log/`. If nothing appears, open your fork's **Actions** tab: new forks sometimes ask you to enable workflows first.
+5. Open your URL on your phone and [install it](#install-on-iphone). Pre-filled `?track=` links work on your URL too.
+
+### Updates: your choice
+
+Your installed app only checks *your* site for updates, so it won't change unless your fork does.
+
+- **Take updates:** when this repo has changed, your fork's main page says it's behind. Click **Sync fork**, then **Update branch**. Your site rebuilds within a minute or two, and the app picks it up next time it opens.
+- **Review first:** click **Sync fork**, then **Compare**, to see exactly what changed before you update.
+- **Stay as you are:** don't sync. Your copy keeps working exactly as it is.
+
+### Move your data across
+
+Each copy has its own web address, so each keeps its own separate data. Nothing moves across by itself.
+
+1. In the app you've been using: **Settings → Export CSV**, and save the file.
+2. Install your copy. On its setup screen, tap **Moving from another phone? Import a CSV backup** and choose the file.
+3. The CSV holds your entries, so everything you've logged comes across. Things you track that have never been logged, and which ones are hidden, aren't in it. Re-add or re-hide those in **Settings**.
+4. Once you've checked everything is there, clear the old copy (**Settings → Delete all data**) and remove its icon.
+
+### Without a GitHub account
+
+Download the code (**Code → Download ZIP**), unzip it, and drag the folder onto [Netlify Drop](https://app.netlify.com/drop) or Cloudflare Pages. All paths are relative, so it works at any address. Updates are then manual: download and upload again.
 
 ## Updating
 
