@@ -66,12 +66,11 @@
       <div id="grid" class="grid"></div>
       <div id="gapask" class="tagrow gapask" role="alert" hidden></div>
       <div id="tagrow" class="tagrow" hidden>
-        <div class="tagrow-head">
-          <span id="tagrow-label"></span>
-          <button id="tagrow-close" class="icon-btn" aria-label="Skip details">×</button>
-        </div>
+        <div id="tagrow-label" class="tagrow-head"></div>
         <div id="tagrow-chips" class="chips"></div>
-        </div>
+        <!-- Details save as they're tapped; Done only puts the box away. -->
+        <div class="tagrow-foot"><button id="tagrow-done" class="done-btn">Done</button></div>
+      </div>
       <button class="link-btn add-past">+ Add past entry</button>
     </section>
 

@@ -719,7 +719,7 @@ function show(view) {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
 document.querySelectorAll('.add-past').forEach(b => b.addEventListener('click', () => openEdit(null)));
-$('#tagrow-close').addEventListener('click', dismissTagRow);
+$('#tagrow-done').addEventListener('click', dismissTagRow);
 
 function renderAll() {
   renderLog();
