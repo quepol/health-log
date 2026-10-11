@@ -384,12 +384,27 @@ function renderHistory() {
 /* ---------- Patterns view ---------- */
 let precede = { symptomId: null, window: 1 };
 
+// Hidden things you track (and hidden details) stay out of Patterns, as they do the Log screen,
+// unless "Include them" is tapped. That lasts until the app is closed, so hidden stays the default.
+let showHidden = false;
+const shownTag = t => t && (showHidden || !t.archived);
+const nameLabel = it => [it.name, it.archived && h('small', { class: 'meta' }, ' (hidden)')];
+
 function renderPatterns() {
   const out = $('#patterns');
-  const items = db.items.filter(it => !it.archived || db.entries.some(e => e.itemId === it.id));
-  if (!db.entries.length) return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'));
+  const used = it => db.entries.some(e => e.itemId === it.id);
+  const hidden = [...db.items.filter(it => it.archived && used(it)),
+    ...db.tags.filter(t => t.archived && db.entries.some(e => e.tagIds.includes(t.id)))];
+  const note = hidden.length ? h('p', { class: 'hint hidden-note' },
+    `${showHidden ? 'Including hidden' : 'Hidden, so not shown'}: ${hidden.map(x => x.name).join(', ')}. `,
+    h('button', { class: 'link-btn', onclick: () => { showHidden = !showHidden; renderPatterns(); } },
+      showHidden ? 'Leave them out' : 'Include them')) : null;
+  const items = db.items.filter(it => (showHidden || !it.archived) && (!it.archived || used(it)));
+  if (!db.entries.some(e => items.some(it => it.id === e.itemId))) {
+    return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note);
+  }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  out.replaceChildren(monthSummary(items, byItem), scaleSwitch(),
+  out.replaceChildren(note, monthSummary(items, byItem), scaleSwitch(),
     ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
 }
 
@@ -408,7 +423,7 @@ function monthSummary(items, byItem) {
     h('table', { class: 'summary' },
       h('thead', {}, h('tr', {}, h('th', {}, ''), h('th', {}, monthName(now)), h('th', {}, monthName(prev)))),
       h('tbody', {}, items.map(it => h('tr', {},
-        h('th', {}, it.name),
+        h('th', {}, nameLabel(it)),
         h('td', {}, stat(byItem.get(it.id), thisM)),
         h('td', {}, stat(byItem.get(it.id), prevM)))))));
 }
@@ -467,10 +482,10 @@ function itemCard(it, entries) {
 
   const tagCounts = new Map();
   for (const e of entries) for (const id of e.tagIds) tagCounts.set(id, (tagCounts.get(id) || 0) + 1);
-  const top = [...tagCounts].filter(([id]) => tagById(id)).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const top = [...tagCounts].filter(([id]) => shownTag(tagById(id))).sort((a, b) => b[1] - a[1]).slice(0, 5);
 
   return h('div', { class: 'card' },
-    h('h3', {}, `${it.name} · days per ${scale}`),
+    h('h3', {}, nameLabel(it), ` · days per ${scale}`),
     bars,
     episodeSection(it),
     h('strong', {}, 'Most common details'),
@@ -509,7 +524,7 @@ function episodeSection(it) {
     h('strong', {}, 'Episodes'),
     lines.map(l => h('p', { class: 'ep-stat' }, l)),
     h('ul', { class: 'ep-list' }, recent.map(ep => {
-      const tags = [...ep.tagIds].map(id => tagById(id)?.name).filter(Boolean).join(', ');
+      const tags = [...ep.tagIds].map(tagById).filter(shownTag).map(t => t.name).join(', ');
       const range = ep.start === ep.end ? fmt(ep.start) : `${fmt(ep.start)} – ${fmt(ep.end)}`;
       const len = ongoing && ep === last ? `day ${today() - ep.start + 1}, ongoing` : plural(epLength(ep), 'day');
       return h('li', {}, h('span', { class: 'ep-range' }, range), ` · ${len} · ${plural(ep.logs, 'log')}`, tags && h('span', { class: 'meta' }, ` · ${tags}`));
