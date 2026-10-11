@@ -56,7 +56,7 @@
           <button class="secondary">Add</button>
         </form>
         <button id="ob-start" class="primary ob-start">Start logging</button>
-        <button id="ob-import" class="link-btn">Moving from another phone?<br>Import a CSV backup</button>
+        <button id="ob-import" class="link-btn">Moving from another phone?<br>Import a backup file</button>
       </div>
     </section>
 
@@ -100,37 +100,53 @@
       <p class="hint">Things you can note when you log, like Stress or Poor sleep. Patterns shows which ones
         come up most. Hiding one removes it from view, not from past entries.</p>
 
-      <h2>Data</h2>
-      <p id="backup-status"></p>
-      <div class="row">
-        <button id="export" class="primary">Export CSV</button>
-        <button id="import-btn" class="secondary">Import CSV</button>
+      <!-- About your data: set apart from the lists above as cards. -->
+      <div class="card settings-card">
+        <h2>Backup</h2>
+        <p id="backup-status"></p>
+        <button id="export" class="file-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>Export to a file</button>
+        <button id="import-btn" class="file-btn">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>Import from a file</button>
         <input type="file" id="import" accept=".csv,text/csv" hidden>
+        <div id="import-confirm" class="card import-confirm" role="alertdialog" aria-labelledby="import-title" hidden></div>
+        <p class="hint">Importing adds anything that isn't already here, without duplicates.</p>
       </div>
-      <p class="hint">Everything stays on this phone, so export regularly: that file is your backup.
-        Importing a backup adds anything that isn't already here, without creating duplicates.</p>
-      <p class="hint" id="storage-status" hidden></p>
-      <button id="wipe" class="link-btn danger-link">Delete all data</button>
-      <div id="wipe-confirm" class="card wipe" role="alertdialog" aria-labelledby="wipe-title" hidden>
-        <p id="wipe-title"><strong>Delete everything on this device?</strong></p>
-        <p id="wipe-detail"></p>
-        <div class="row">
-          <button id="wipe-yes" class="danger-solid">Delete everything</button>
-          <button id="wipe-no" class="secondary">Cancel</button>
+
+      <div class="card settings-card">
+        <h2>Storage</h2>
+        <p id="storage-summary"></p>
+        <p class="hint" id="storage-status" hidden></p>
+        <button id="wipe" class="link-btn danger-link">Delete all data</button>
+        <div id="wipe-confirm" class="card wipe" role="alertdialog" aria-labelledby="wipe-title" hidden>
+          <p id="wipe-title"><strong>Delete everything on this device?</strong></p>
+          <p id="wipe-detail"></p>
+          <div class="row">
+            <button id="wipe-yes" class="danger-solid">Delete everything</button>
+            <button id="wipe-no" class="secondary">Cancel</button>
+          </div>
         </div>
       </div>
 
-      <h2>Privacy &amp; security</h2>
-      <p class="hint">Everything you log stays on this phone. There's no account, no analytics, and the app
-        can't send your data anywhere.</p>
-      <p class="hint">What it can't protect against:</p>
-      <ul class="hint privacy">
-        <li>Anyone who can unlock your phone can open the app and see your log.</li>
-        <li>The app updates itself from its website. If that site were hacked, an update could
-          read your data.</li>
-        <li>Exported files aren't encrypted. They're only as safe as wherever you keep them.</li>
-      </ul>
-      <p class="hint"><a href="https://github.com/quepol/health-log#privacy--security" target="_blank" rel="noopener">Full details</a></p>
+      <div class="card settings-card">
+        <h2>Privacy &amp; security</h2>
+        <p class="hint">Everything you log stays on this phone. There's no account, no analytics, and the app
+          can't send your data anywhere.</p>
+        <p class="hint">What it can't protect against:</p>
+        <ul class="hint privacy">
+          <li>Anyone who can unlock your phone can open the app and see your log.</li>
+          <li>The app updates itself from its website. If that site were hacked, an update could
+            read your data.</li>
+          <li>Exported files aren't encrypted. They're only as safe as wherever you keep them.</li>
+        </ul>
+        <p class="hint"><a href="https://github.com/quepol/health-log#privacy--security" target="_blank" rel="noopener">Full details</a></p>
+      </div>
+
+      <div class="app-footer">
+        <div id="app-version">Health Log</div>
+        <button id="check-updates" class="link-btn">Check for updates</button>
+        <div id="update-status" role="status" hidden></div>
+      </div>
     </section>
   </main>
 
