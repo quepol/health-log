@@ -14,7 +14,7 @@ The app has two ideas:
 ### Screens
 
 - **Setup (first launch):**
-  - Suggests things to track (Headache, Back pain, Exercise) and details (Stress, Poor sleep, Dehydrated). Nothing is pre-selected, and you can add your own. You can also import a CSV backup instead.
+  - Suggests things to track (Headache, Back pain, Exercise) and details (Stress, Poor sleep, Dehydrated). Nothing is pre-selected, and you can add your own. You can also import a backup file instead.
   - Opened in the browser on an iPhone, it first shows 3 steps to add it to the Home Screen, because the Home Screen app keeps its own data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
@@ -32,7 +32,9 @@ The app has two ideas:
   - **Hide**: takes it off the Log screen and Patterns; past entries stay. Hidden ones move to the bottom of the list.
   - **Merge**: rename one to match another (Headaches → Headache).
   - **Delete**: on hidden rows only.
-  - **Data**: Export CSV, Import CSV, and Delete all data.
+  - **Backup**: Export to a file, or Import from a file (it shows what's new before adding anything).
+  - **Storage**: how many entries are on this phone, and Delete all data.
+  - At the bottom: the app's version and **Check for updates**.
 
 ### Episodes
 
@@ -55,10 +57,10 @@ Set it up and log from the Home Screen icon, not the browser tab: the two keep s
 ## Back up your data
 
 Data lives only on the device, and browsers can clear website storage. Home Screen apps are mostly exempt, but Apple doesn't guarantee it.
-- **Persistent storage:** the app asks the browser to mark its storage as persistent, so it isn't cleared to free up space. If the browser says no, Settings shows a short warning under Data.
-- **Export:** use **Settings → Export CSV** regularly. On iPhone it opens the share sheet so you can save to Files or iCloud Drive.
-- **Reminder:** the Settings tab shows an orange dot when a backup is overdue.
-- **Import:** importing the same file twice won't create duplicates. Importing an older backup brings back anything you've deleted since.
+- **Persistent storage:** the app asks the browser to mark its storage as persistent, so it isn't cleared to free up space. If the browser says no, Settings shows a short warning under Storage.
+- **Export:** use **Settings → Export to a file** regularly. On iPhone it opens the share sheet so you can save to Files or iCloud Drive. The app only says "Backup saved" once the share sheet has finished; when it falls back to a download, it asks you to check the file is there.
+- **Reminder:** when a backup is overdue, the Settings tab shows an orange dot and the Backup status turns orange.
+- **Import:** in Settings, the app first shows how many entries are new and adds nothing until you confirm. Importing the same file twice won't create duplicates. Importing an older backup brings back anything you've deleted since.
 
 **CSV format:** `timestamp,item,tags,note`.
 - `item` is the thing you tracked, and `tags` are its details, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.
@@ -101,7 +103,7 @@ Health data is sensitive, so here is plainly what the app does and doesn't prote
 **What it doesn't protect against**
 - **A compromised hosting site or GitHub account.** The app's code is delivered from GitHub Pages and updates install automatically. If this repo or the account behind it were compromised, a malicious update could read your stored data and send it elsewhere; it could also remove the Content-Security-Policy, which lives in the app's own HTML. You are trusting whoever controls the site. To avoid that, you can [host your own copy](#host-your-own-copy); [control over updates](https://github.com/quepol/health-log/issues/15) for the shared copy is planned.
 - **Someone with your unlocked phone.** There's no separate passcode, so anyone who can unlock the phone can open the app and see your log. Your phone's passcode and device encryption are the protection.
-- **Exported backups.** **Export CSV** creates a plain, unencrypted text file. Once you save or share it (Files, iCloud Drive, email), it's protected only by wherever you put it.
+- **Exported backups.** **Export to a file** creates a plain, unencrypted CSV file. Once you save or share it (Files, iCloud Drive, email), it's protected only by wherever you put it.
 - **Pre-filled links.** A link like `?track=Heartburn` shows what someone is tracking to anyone who sees it, and the hosting site can see it too, because the link loads the page.
 - **The host seeing visits.** GitHub can see that a device downloaded the app (an IP address and browser type, like any website), but never what you log.
 - **Losing data.** The browser can clear website storage, and removing the app from the Home Screen can remove its data too. See [Back up your data](#back-up-your-data).
@@ -134,8 +136,8 @@ Your installed app only checks *your* site for updates, so it won't change unles
 
 Each copy has its own web address, so each keeps its own separate data. Nothing moves across by itself.
 
-1. In the app you've been using: **Settings → Export CSV**, and save the file.
-2. Install your copy. On its setup screen, tap **Moving from another phone? Import a CSV backup** and choose the file.
+1. In the app you've been using: **Settings → Export to a file**, and save the file.
+2. Install your copy. On its setup screen, tap **Moving from another phone? Import a backup file** and choose the file.
 3. The CSV holds your entries, so everything you've logged comes across. Things you track that have never been logged, and which ones are hidden, aren't in it. Re-add or re-hide those in **Settings**.
 4. Once you've checked everything is there, clear the old copy (**Settings → Delete all data**) and remove its icon.
 
@@ -157,8 +159,8 @@ To try it on a phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`. In
 
 ### Updating
 
-- **How updates arrive:** the app opens instantly from its saved copy, then checks for a new version (at launch and whenever it comes back to the foreground). If one arrives before you've touched anything, it reloads once to show it. If you've already started tapping, it waits until next time. iPhone sometimes resumes a recently used app instead of relaunching it; closing it from the app switcher forces a fresh launch.
-- **Cache version:** bump `VERSION` in `sw.js` with each release. A changed `sw.js` is how the app notices an update.
+- **How updates arrive:** the app opens instantly from its saved copy, then checks for a new version (at launch and whenever it comes back to the foreground). If one arrives before you've touched anything, it reloads once to show it. If you've already started tapping, it waits until next time. iPhone sometimes resumes a recently used app instead of relaunching it; closing it from the app switcher forces a fresh launch. **Settings → Check for updates** checks straight away.
+- **Cache version:** bump `VERSION` in `sw.js` with each release, keeping the `v` + number format. A changed `sw.js` is how the app notices an update, and Settings shows that number as the version.
 - **Adding or removing files:** also update the `FILES` list in `sw.js`.
 
 ### Files

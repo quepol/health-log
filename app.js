@@ -739,8 +739,13 @@ function renderSettings() {
   renderList(db.tags, $('#tags-list'));
   fitLists();
   const days = exportAge(), stale = backupStale();
-  $('#backup-status').textContent = days === null ? 'Never exported.' : `Last export: ${days === 0 ? 'today' : plural(days, 'day') + ' ago'}.`;
+  $('#backup-status').textContent = days === null ? 'No backup yet. Export one so your log lives somewhere besides this phone.'
+    : `Last backup: ${days === 0 ? 'today' : plural(days, 'day') + ' ago'}.`;
+  const n = db.entries.length, first = n && db.entries.map(e => e.ts).sort()[0];
+  $('#storage-summary').replaceChildren(h('strong', {}, 'On this phone'), h('br'),
+    n ? `${n} ${n === 1 ? 'entry' : 'entries'} since ${fmtDay(first.slice(0, 10), { month: 'long', year: 'numeric' })}` : 'Nothing logged yet.');
   $('#backup-status').classList.toggle('warn', stale);
+  showVersion();
   document.querySelector('[data-view="settings"]').classList.toggle('warn', stale);
 }
 
@@ -754,12 +759,19 @@ async function exportCSV() {
   const csv = '\ufeff' + [CSV_HEADER, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n') + '\r\n';
   const file = new File([csv], `health-log-${todayKey()}.csv`, { type: 'text/csv' });
   // On phones the share sheet is the useful path (Files, AirDrop, Mail); elsewhere download.
+  // Say only what actually happened: a finished share is saved; a download has only started
+  // (iPhone Home Screen apps can drop downloads silently), so ask people to check.
+  let msg = 'Backup saved';
   if (matchMedia('(pointer: coarse)').matches && navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file] }); } catch (err) { if (err.name === 'AbortError') return; download(file); }
-  } else download(file);
+    try { await navigator.share({ files: [file] }); } catch (err) {
+      if (err.name === 'AbortError') return toast('Cancelled, so nothing was saved');
+      download(file); msg = 'Download started. Check the file is there before relying on it.';
+    }
+  } else { download(file); msg = 'Download started. Check the file is there before relying on it.'; }
   db.lastExport = new Date().toISOString();
   save();
   renderSettings();
+  toast(msg);
 }
 function download(file) {
   const url = URL.createObjectURL(file);
@@ -795,31 +807,62 @@ function findOrCreate(list, name, make) {
   return x;
 }
 
-function importCSV(text) {
+// Read a backup into plain rows, and work out which aren't here yet, without changing anything.
+function readBackup(text) {
   const [header, ...rows] = parseCSV(text.replace(/^\ufeff/, ''));
   const col = Object.fromEntries((header || []).map((name, i) => [name.trim().toLowerCase(), i]));
-  if (col.timestamp == null || col.item == null) return toast('This file isn’t a Health Log backup.');
-  const seen = new Set(db.entries.map(e => `${Date.parse(e.ts)}|${e.itemId}`));
-  let added = 0, dupes = 0, bad = 0;
+  if (col.timestamp == null || col.item == null) return null;
+  const key = (ts, name) => `${Date.parse(ts)}|${name.toLowerCase()}`;
+  const seen = new Set(db.entries.map(e => key(e.ts, itemById(e.itemId)?.name ?? '')));
+  const fresh = []; let total = 0, bad = 0;
   for (const r of rows) {
     let ts = (r[col.timestamp] || '').trim();
     const itemName = cleanName(r[col.item] || '');
     if (!ts && !itemName) continue; // blank line
+    total++;
     // Accept "2026-10-06 14:32" (e.g. after a spreadsheet round-trip): treat as this device's local time.
     if (!/[+-]\d\d:\d\d$|Z$/.test(ts)) ts = isNaN(new Date(ts.replace(' ', 'T'))) ? '' : isoLocal(new Date(ts.replace(' ', 'T')));
     if (!ts || isNaN(Date.parse(ts)) || !itemName) { bad++; continue; }
-    const item = findOrCreate(db.items, itemName, named);
-    const key = `${Date.parse(ts)}|${item.id}`;
-    if (seen.has(key)) { dupes++; continue; }
-    seen.add(key);
-    const tagIds = (r[col.tags] || '').split(';').map(s => s.trim()).filter(Boolean).map(n => findOrCreate(db.tags, n, named).id);
-    db.entries.push({ id: uid(), itemId: item.id, ts, tagIds: [...new Set(tagIds)], note: (r[col.note] || '').trim() });
-    added++;
+    if (seen.has(key(ts, itemName))) continue;
+    seen.add(key(ts, itemName));
+    fresh.push({ ts, itemName, tagNames: (r[col.tags] || '').split(';').map(s => s.trim()).filter(Boolean), note: (r[col.note] || '').trim() });
+  }
+  return { fresh, total, bad, dupes: total - bad - fresh.length };
+}
+
+function addEntries(fresh) {
+  for (const r of fresh) {
+    const tagIds = r.tagNames.map(n => findOrCreate(db.tags, n, named).id);
+    db.entries.push({ id: uid(), itemId: findOrCreate(db.items, r.itemName, named).id, ts: r.ts, tagIds: [...new Set(tagIds)], note: r.note });
   }
   save();
   renderAll();
-  finishOnboarding?.();
-  toast((added ? `Added ${added} ${added === 1 ? 'entry' : 'entries'}` : 'Nothing new') + (dupes ? ` · ${dupes} already here` : '') + (bad ? ` · ${bad} couldn’t be read` : ''));
+}
+
+// In Settings, show what's in the file and add nothing until confirmed. On first-launch setup,
+// restoring is the whole point, so add straight away.
+function importCSV(text) {
+  const b = readBackup(text);
+  if (!b) return toast('This file isn’t a Health Log backup.');
+  const summary = (b.dupes ? ` · ${b.dupes} already here` : '') + (b.bad ? ` · ${b.bad} couldn’t be read` : '');
+  const n = b.fresh.length, entries = `${n} ${n === 1 ? 'entry' : 'entries'}`;
+  if (finishOnboarding || !n) {
+    if (n) addEntries(b.fresh);
+    finishOnboarding?.();
+    return toast((n ? `Added ${entries}` : 'Nothing new') + summary);
+  }
+  const card = $('#import-confirm'), close = () => { card.hidden = true; card.replaceChildren(); };
+  card.replaceChildren(
+    h('p', { id: 'import-title' }, h('strong', {}, `Found ${b.total} ${b.total === 1 ? 'entry' : 'entries'} in this file`)),
+    h('p', {}, n === b.total ? 'All of them are new.'
+      : !b.bad ? `${n} ${n === 1 ? 'is' : 'are'} new; the rest are already here.`
+      : [`${n} ${n === 1 ? 'is' : 'are'} new`, b.dupes && `${b.dupes} already here`, `${b.bad} couldn’t be read`]
+          .filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' and $1') + '.'),
+    h('div', { class: 'row' },
+      h('button', { class: 'primary', onclick: () => { close(); addEntries(b.fresh); toast(`Added ${entries}`); } }, `Add ${entries}`),
+      h('button', { class: 'secondary', onclick: close }, 'Cancel')));
+  card.hidden = false;
+  card.scrollIntoView({ block: 'center' });
 }
 
 $('#export').addEventListener('click', exportCSV);
@@ -990,3 +1033,31 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     });
   }).catch(() => {});
 }
+
+/* ---------- Version and "Check for updates" (bottom of Settings) ----------
+ * The version is read from the offline copy's cache name (healthlog-v33), so it shows what is
+ * actually installed rather than a number typed in a second place. */
+function showVersion() {
+  if (!('caches' in window)) return;
+  caches.keys().then(keys => {
+    const v = Math.max(0, ...keys.map(k => +(/^healthlog-v(\d+)$/.exec(k)?.[1] || 0)));
+    $('#app-version').textContent = v ? `Health Log · version ${v}` : 'Health Log';
+  }).catch(() => {});
+}
+
+$('#check-updates').addEventListener('click', async () => {
+  const btn = $('#check-updates'), status = $('#update-status');
+  const say = text => { status.textContent = text; status.hidden = false; btn.hidden = true; };
+  const reset = () => setTimeout(() => { status.hidden = true; btn.hidden = false; }, 4000);
+  const reg = await navigator.serviceWorker?.getRegistration().catch(() => null);
+  if (!reg) { say('Updates aren’t available here.'); return reset(); }
+  if (!navigator.onLine) { say('You’re offline. Try again when you’re connected.'); return reset(); }
+  say('Checking for updates…');
+  try { await reg.update(); } catch { say('Couldn’t check. Are you online?'); return reset(); }
+  const next = reg.installing || reg.waiting;
+  // Only claim "latest" when the check found nothing; otherwise wait for the new version and reload.
+  if (!next) { say('You’re on the latest version.'); return reset(); }
+  say('Updating…');
+  navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+  next.addEventListener('statechange', () => { if (next.state === 'redundant') { say('Couldn’t update. Try again later.'); reset(); } });
+});
