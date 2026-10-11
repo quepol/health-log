@@ -208,14 +208,32 @@ function logNow(itemId) {
 
 function renderTagRow() {
   const e = entryById(lastLoggedId);
-  const tags = active(db.tags);
-  $('#tagrow').hidden = !e || !tags.length;
-  if ($('#tagrow').hidden) return;
+  $('#tagrow').hidden = !e;
+  if (!e) return;
   $('#tagrow-label').textContent = 'What else was going on?';
-  $('#tagrow-chips').replaceChildren(...tags.map(t => chip(t.name, e.tagIds.includes(t.id), on => {
+  const add = h('button', { type: 'button', class: 'chip add-chip' }, '+ Add');
+  add.addEventListener('click', () => {
+    const form = h('form', { class: 'add-row' },
+      h('input', { name: 'name', placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off' }),
+      h('button', { class: 'primary' }, 'Add'));
+    form.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const v = cleanName(form.elements.name.value);
+      if (!v) return form.elements.name.focus();
+      // A new detail is added to the list and to what was just logged; a hidden one comes back.
+      let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
+      if (t) t.archived = false; else db.tags.push(t = named(v));
+      if (!e.tagIds.includes(t.id)) e.tagIds.push(t.id);
+      save();
+      renderAll();
+    });
+    add.replaceWith(form);
+    form.elements.name.focus();
+  });
+  $('#tagrow-chips').replaceChildren(...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
     e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
     save();
-  })));
+  })), add);
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
 
@@ -702,11 +720,6 @@ function show(view) {
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
 document.querySelectorAll('.add-past').forEach(b => b.addEventListener('click', () => openEdit(null)));
 $('#tagrow-close').addEventListener('click', dismissTagRow);
-$('#tagrow-edit').addEventListener('click', () => {
-  show('settings');
-  $('#tags-heading').scrollIntoView();
-  scrollBy(0, -$('.top').offsetHeight - 8); // clear the sticky header (its height follows text size)
-});
 
 function renderAll() {
   renderLog();
