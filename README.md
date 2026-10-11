@@ -1,6 +1,23 @@
 # Health Log
 
-A one-tap health tracker: headaches, back pain, exercise, or anything else you want to keep an eye on. It's a static PWA written in plain HTML, CSS and JS: no build step, no dependencies, no backend, no accounts, no network calls. All data stays in `localStorage` on the phone you use it on.
+A one-tap health tracker: headaches, back pain, exercise, or anything else you want to keep an eye on. It's a static PWA written in plain HTML, CSS and JS: no build step, no dependencies, no backend, no accounts. Your data never leaves the phone you use it on.
+
+## Privacy & security
+
+Health data is sensitive, so here is plainly what the app does and doesn't protect against.
+
+**What it does**
+- **Your data stays on your phone.** Everything you log is stored in the browser's local storage on that device. There is no server, account, sync or analytics, so there is nowhere for it to go.
+- **The app can't send data anywhere.** Its code makes no network requests, and a Content-Security-Policy (`connect-src 'none'`) blocks them even if one were added by mistake. The only network activity is downloading the app's own files (and later updates) from the site it's hosted on.
+- **No third-party code.** No analytics, ads, fonts, CDNs or libraries. Every file is in this repo, and the policy above only allows the app's own files.
+
+**What it doesn't protect against**
+- **A compromised hosting site or GitHub account.** The app's code is delivered from GitHub Pages and updates install automatically. If this repo or the account behind it were compromised, a malicious update could read your stored data and send it elsewhere; it could also remove the Content-Security-Policy, which lives in the app's own HTML. You are trusting whoever controls the site. A guide to [hosting your own copy](https://github.com/quepol/health-log/issues/16) and [control over updates](https://github.com/quepol/health-log/issues/15) are both planned.
+- **Someone with your unlocked phone.** There's no separate passcode, so anyone who can unlock the phone can open the app and see your log. Your phone's passcode and device encryption are the protection.
+- **Exported backups.** **Export CSV** creates a plain, unencrypted text file. Once you save or share it (Files, iCloud Drive, email), it's protected only by wherever you put it.
+- **Pre-filled links.** A link like `?track=Heartburn` shows what someone is tracking to anyone who sees it, and the hosting site can see it too, because the link loads the page.
+- **The host seeing visits.** GitHub can see that a device downloaded the app (an IP address and browser type, like any website), but never what you log.
+- **Losing data.** The browser can clear website storage, and removing the app from the Home Screen can remove its data too. See [Back up your data](#back-up-your-data).
 
 ## How it works
 

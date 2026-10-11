@@ -209,6 +209,9 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .ep-range { font-weight: 600; }
 .ep-list .meta { color: var(--muted); }
 .hint { color: var(--muted); font-size: .9rem; }
+.privacy { padding-left: 1.2rem; margin: 0 0 .75rem; }
+.privacy li { margin-bottom: .4rem; }
+.hint a { color: var(--accent); font-weight: 600; }
 .precede-row { padding: .5rem 0; border-bottom: 1px solid var(--border); }
 .precede-row.strong .lift { color: var(--accent); font-weight: 700; }
 .precede-row .meta { font-size: .85rem; color: var(--muted); }
