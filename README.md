@@ -36,7 +36,7 @@ The app has two ideas:
   - **iPhone browser:** opened in the browser on an iPhone, the app first explains what it is and shows 3 steps to add it to the Home Screen, because the Home Screen app keeps its own data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
-  - **What else was going on?** then offers your details. Tap any that apply or ignore it; **Edit details** jumps to Settings.
+  - **What else was going on?** then offers your details. Tap any that apply or ignore it; **+ Add** creates a new one and adds it to what you just logged.
   - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
   - **＋ Add new** adds a button right there. **+ Add past entry** backdates one.
 - **History:**

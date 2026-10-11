@@ -135,6 +135,8 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .chip { min-height: 2.75rem; border-radius: 999px; background: var(--surface-2); border-color: transparent; }
 .chip[aria-pressed="true"] { background: var(--chip-on); color: var(--accent-text); font-weight: 600; }
+.add-chip { background: transparent; border: 1px dashed var(--accent); color: var(--accent); }
+.chips > .add-row { flex-basis: 100%; margin-top: 0; }
 
 /* Toast */
 .toast {
