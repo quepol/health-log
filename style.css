@@ -127,7 +127,9 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .log-btn.ongoing .sub { color: var(--accent); font-weight: 600; }
 .empty { color: var(--muted); }
 .hidden-note { margin: 0 0 1rem; }
-.hidden-note .link-btn { margin: 0; min-height: 2.75rem; }
+.hidden-note .link-btn { margin: 0; min-height: 0; position: relative; }
+/* A tall button would stretch the line it sits on; this keeps the tap area big without that. */
+.hidden-note .link-btn::after { content: ''; position: absolute; inset: -.75rem -.5rem; }
 h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 
 /* Trigger chips */
@@ -200,6 +202,7 @@ h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 .summary th, .summary td { padding: .5rem .25rem; text-align: left; border-bottom: 1px solid var(--border); }
 .summary td { font-variant-numeric: tabular-nums; }
 .summary small { color: var(--muted); }
+.nowrap { white-space: nowrap; }
 .bars { display: flex; gap: 2px; align-items: flex-end; margin: .25rem 0 .75rem; }
 .bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
 /* Chart numbers stay a fixed small size so 12 columns always fit; everything else on the page scales. */
