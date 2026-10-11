@@ -54,7 +54,11 @@ The app has two ideas:
 
 ### Episodes
 
-Patterns groups days in a row into **episodes**, so a 5-day cold sore shows up as one episode lasting 5 days, while headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for an inhaler, the log count works as a puff count.
+Counting days treats one 5-day flare and five separate headaches the same: 5 days. Episodes tell them apart, and answer the questions a doctor usually asks: how long does each one last, how often does it come back, and is that changing (say, after starting a new medicine)?
+
+Patterns groups days in a row into **episodes**, so a 5-day flare shows up as one episode lasting 5 days, while headaches that come and go show up as one-day episodes. For anything that lasts several days, tap it once each day it's there. Extra taps on the same day are fine; for an inhaler, the log count works as a puff count.
+
+Until something has run for two days or more, its Patterns card explains this where the episodes will appear. That note goes away once there are episodes to show, or once it has 3 finished episodes that typically last one day, like headaches (the same rule as the missed-days question).
 
 **Missed days:** if you log after missing one or two days, the app asks whether it was still there.
 - **Yes** fills in the missing days, marked "Filled in", so the episode stays whole.
@@ -67,7 +71,7 @@ Details are only recorded alongside a log, so they show what comes up most often
 
 To test a hunch, make it a button instead (Exercise, Medicine, Late meal…) and tap it *every* time it happens, including on good days. **What tends to come before it?** then compares it against your baseline:
 - **`2.0×`** means it shows up beforehand twice as often as on a typical day.
-- **First days only:** it looks at the first day of each episode, since what happened on day 5 of an outbreak didn't cause it.
+- **First days only:** it looks at the first day of each episode, since what happened on day 5 of a flare didn't cause it.
 - **Delayed effects:** for slow-onset things, try the ≤ 3 or ≤ 5 day windows.
 - **Correlation, not proof:** it needs a few weeks of data before it means much.
 
