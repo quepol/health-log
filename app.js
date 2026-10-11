@@ -417,7 +417,9 @@ function monthSummary(items, byItem) {
   const stat = (entries, m) => {
     const inMonth = entries.filter(e => e.ts.startsWith(m));
     const days = new Set(inMonth.map(eDay)).size;
-    return [plural(days, 'day'), inMonth.length !== days ? h('small', {}, ` (${inMonth.length} logs)`) : null];
+    // "3 days" and "(4 logs)" each stay in one piece; only the gap between them can wrap.
+    return [h('span', { class: 'nowrap' }, plural(days, 'day')),
+      ...(inMonth.length !== days ? [' ', h('small', { class: 'nowrap' }, `(${inMonth.length} logs)`)] : [])];
   };
   return h('div', { class: 'card table-wrap' },
     h('table', { class: 'summary' },

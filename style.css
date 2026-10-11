@@ -202,6 +202,7 @@ h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 .summary th, .summary td { padding: .5rem .25rem; text-align: left; border-bottom: 1px solid var(--border); }
 .summary td { font-variant-numeric: tabular-nums; }
 .summary small { color: var(--muted); }
+.nowrap { white-space: nowrap; }
 .bars { display: flex; gap: 2px; align-items: flex-end; margin: .25rem 0 .75rem; }
 .bars .col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
 /* Chart numbers stay a fixed small size so 12 columns always fit; everything else on the page scales. */
