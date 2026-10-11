@@ -493,7 +493,7 @@ function itemCard(it, entries) {
     h('strong', {}, 'Most common details'),
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
-          h('li', {}, `${tagById(id).name}: ${n} (${Math.round((n / entries.length) * 100)}% of entries)`)))
+          h('li', {}, `${tagById(id).name}: ${n} of ${plural(entries.length, 'log')} (${Math.round((n / entries.length) * 100)}%)`)))
       : h('p', { class: 'hint' }, 'No details yet.'));
 }
 
@@ -507,8 +507,8 @@ function episodeSection(it) {
   // No runs of days yet: explain what this section will show, until it's clear the item lasts one day.
   if (!eps.some(ep => epLength(ep) > 1)) return lastsOneDay(it) ? null : h('div', { class: 'episodes' },
     h('strong', {}, 'Episodes'),
-    h('p', { class: 'hint' }, 'If it lasts more than a day, tap it each day it\'s there. Days in a row count as one episode, ' +
-      'so you\'ll see how long each one lasts and how long you go between them. These are the questions a doctor usually asks.'));
+    h('p', { class: 'hint' }, 'If it lasts more than a day, tap it each day. Days in a row become one episode, so you\'ll see ' +
+      'how long they last and how far apart they are, which is what a doctor will ask.'));
   const last = eps.at(-1), ongoing = isOngoing(last);
   const done = ongoing ? eps.slice(0, -1) : eps; // an open episode's length isn't known yet
   const between = eps.slice(1).map((ep, i) => ep.start - eps[i].end - 1);
@@ -573,16 +573,15 @@ function precedeCard(items) {
       h('select', { 'aria-label': 'Compare against', onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
         withData.map(it => h('option', { value: it.id, selected: it.id === sym.id }, it.name))),
       h('select', { 'aria-label': 'Window', onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
-        [[0, 'Same day'], [1, '≤ 1 day before'], [2, '≤ 2 days before'], [3, '≤ 3 days before'], [5, '≤ 5 days before']]
+        [[0, 'Same day'], [1, 'Within 1 day'], [2, 'Within 2 days'], [3, 'Within 3 days'], [5, 'Within 5 days']]
           .map(([v, l]) => h('option', { value: v, selected: v === precede.window }, l)))),
-    h('p', { class: 'hint' }, `${plural(symptomDays.length, unit)} over the last ${plural(total, 'day')}` +
-      '. Days in a row count once, from the first day.' + (enough ? '' : ' Too few to read much into yet.')),
+    h('p', { class: 'hint' }, `Based on ${plural(symptomDays.length, unit)} in the last ${plural(total, 'day')}.` +
+      (enough ? '' : ' Too few to read much into yet.')),
     rows.map(r => h('div', { class: 'precede-row' + (enough && r.hit >= 3 && r.lift >= 1.5 ? ' strong' : '') },
       h('div', {}, h('strong', {}, r.it.name), ' ', h('span', { class: 'lift' }, r.pB ? `${r.lift.toFixed(1)}×` : '–')),
-      h('div', { class: 'meta' }, `Before ${pct(r.pS)} of ${unit}s (${r.hit}/${symptomDays.length}) vs ${pct(r.pB)} of all days`))),
-    h('p', { class: 'hint' }, '“2.0×” means it shows up beforehand twice as often as on a typical day. ' +
-      'Correlation, not proof, and it only works if you tap it every time it happens, not just on bad days. ' +
-      'Details can’t be compared this way, because they’re only recorded alongside another button.'));
+      h('div', { class: 'meta' }, `Before ${r.hit} of ${plural(symptomDays.length, 'episode')} (${pct(r.pS)}), vs ${pct(r.pB)} of days overall`))),
+    h('p', { class: 'hint' }, '2.0× means it came before twice as often as usual. It shows a link, not a cause, ' +
+      'and only works if you tap it every time, not just on bad days.'));
 }
 
 /* ---------- Settings view ---------- */
@@ -716,7 +715,7 @@ function bindAdd(form, list, make) {
     ev.preventDefault();
     const v = cleanName(form.elements.name.value);
     if (!v) return;
-    if (nameTaken(list, v)) return toast(`“${v}” already exists`);
+    if (nameTaken(list, v)) return toast(`“${v}” is already here`);
     const firstHidden = list.findIndex(x => x.archived); // new ones go above the hidden ones
     list.splice(firstHidden < 0 ? list.length : firstHidden, 0, make(v));
     save();
@@ -799,7 +798,7 @@ function findOrCreate(list, name, make) {
 function importCSV(text) {
   const [header, ...rows] = parseCSV(text.replace(/^\ufeff/, ''));
   const col = Object.fromEntries((header || []).map((name, i) => [name.trim().toLowerCase(), i]));
-  if (col.timestamp == null || col.item == null) return toast('Not a Health Log CSV (needs timestamp and item columns)');
+  if (col.timestamp == null || col.item == null) return toast('This file isn’t a Health Log backup.');
   const seen = new Set(db.entries.map(e => `${Date.parse(e.ts)}|${e.itemId}`));
   let added = 0, dupes = 0, bad = 0;
   for (const r of rows) {
@@ -820,7 +819,7 @@ function importCSV(text) {
   save();
   renderAll();
   finishOnboarding?.();
-  toast(`Imported ${added}` + (dupes ? `, ${dupes} already here` : '') + (bad ? `, ${bad} unreadable` : ''));
+  toast((added ? `Added ${added} ${added === 1 ? 'entry' : 'entries'}` : 'Nothing new') + (dupes ? ` · ${dupes} already here` : '') + (bad ? ` · ${bad} couldn’t be read` : ''));
 }
 
 $('#export').addEventListener('click', exportCSV);
@@ -948,8 +947,8 @@ function onboard() {
 /* ---------- Delete all data ---------- */
 $('#wipe').addEventListener('click', () => {
   const n = db.entries.length;
-  $('#wipe-detail').textContent = `This erases ${n} ${n === 1 ? 'entry' : 'entries'}, your buttons and your details. ` +
-    (n && !db.lastExport ? 'You have never exported a backup. ' : '') + 'It can’t be undone; export a CSV first if you might want them back.';
+  $('#wipe-detail').textContent = `This erases ${n} ${n === 1 ? 'entry' : 'entries'} and everything you track. ` +
+    (n && !db.lastExport ? 'You’ve never exported a backup. ' : '') + 'This can’t be undone.';
   $('#wipe').hidden = true;
   $('#wipe-confirm').hidden = false;
 });
