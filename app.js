@@ -573,6 +573,7 @@ const cleanName = s => s.replace(/;/g, ',').trim(); // ';' separates tags in the
 const nameTaken = (list, name, self) => list.some(x => x !== self && x.name.toLowerCase() === name.toLowerCase());
 
 let deleting = null; // id of the hidden row whose delete confirmation is open
+let merging = null;  // { id, into }: a row renamed to another one's name, awaiting "Merge?"
 
 function renderList(list, el) {
   el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
@@ -580,7 +581,9 @@ function renderList(list, el) {
       value: x.name, 'aria-label': 'Name',
       onchange: ev => {
         const v = cleanName(ev.target.value);
-        if (v && !nameTaken(list, v, x)) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
+        const into = v && list.find(o => o !== x && o.name.toLowerCase() === v.toLowerCase());
+        if (into) { merging = { id: x.id, into: into.id }; deleting = null; return renderSettings(); }
+        if (v) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
       },
     }),
     // Kept together so that, when the row is too narrow, they wrap as one group under the name.
@@ -589,10 +592,42 @@ function renderList(list, el) {
       !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
       !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
       // Hidden items leave the Log screen / details row; their history stays.
-      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; deleting = null; save(); renderAll(); } },
+      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; deleting = merging = null; save(); renderAll(); } },
         x.archived ? 'Show' : 'Hide'),
       x.archived && h('button', { class: 'small danger', 'aria-label': `Delete ${x.name}`, onclick: () => askDelete(list, x) }, 'Delete')),
-    deleting === x.id && deleteConfirm(list, x))));
+    deleting === x.id && deleteConfirm(list, x),
+    merging?.id === x.id && mergeConfirm(list, x, list.find(o => o.id === merging.into)))));
+}
+
+// Renaming to another one's name (e.g. Headaches → Headache) offers to merge them: the entries
+// move over and the renamed one goes. The one already there keeps its name and place.
+function mergeConfirm(list, from, into) {
+  const n = usedBy(list, from).length, entries = `${n} ${n === 1 ? 'entry' : 'entries'}`;
+  const detail = !n ? `${from.name} has no entries, so it’s simply removed.`
+    : isItemList(list) ? `Its ${entries} move to ${into.name}, and ${from.name} is removed. This can’t be undone.`
+    : `It’s on ${entries}; they’ll have ${into.name} instead, and ${from.name} is removed. This can’t be undone.`;
+  return h('div', { class: 'card merge-confirm', role: 'alertdialog', 'aria-label': `Merge ${from.name} into ${into.name}?` },
+    h('p', {}, h('strong', {}, `Merge ${from.name} into ${into.name}?`)),
+    h('p', {}, detail),
+    h('div', { class: 'row' },
+      h('button', { class: 'primary', onclick: () => {
+        for (const e of db.entries) {
+          if (isItemList(list)) { if (e.itemId === from.id) e.itemId = into.id; }
+          else if (e.tagIds.includes(from.id)) e.tagIds = [...new Set(e.tagIds.map(id => id === from.id ? into.id : id))];
+        }
+        // Merging a visible one never makes it vanish: a hidden target comes back, in its place.
+        if (!from.archived && into.archived) {
+          into.archived = false;
+          list.splice(list.indexOf(into), 1);
+          list.splice(list.indexOf(from), 0, into);
+        }
+        list.splice(list.indexOf(from), 1);
+        merging = null;
+        save();
+        renderAll();
+        toast(`Merged into ${into.name}`);
+      } }, 'Merge'),
+      h('button', { class: 'secondary', onclick: () => { merging = null; renderSettings(); } }, 'Cancel')));
 }
 
 const isItemList = list => list === db.items;
@@ -600,6 +635,7 @@ const usedBy = (list, x) => db.entries.filter(e => isItemList(list) ? e.itemId =
 
 // Unused: delete at once, with Undo (nothing is lost). Used: confirm first, saying what goes.
 function askDelete(list, x) {
+  merging = null;
   if (usedBy(list, x).length) { deleting = x.id; return renderSettings(); }
   const i = list.indexOf(x);
   list.splice(i, 1);
@@ -787,7 +823,7 @@ function show(view) {
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
   if (view !== 'log') dismissTagRow(); else fitGrid();
-  if (view === 'settings') { deleting = null; sinkHidden(); renderSettings(); }
+  if (view === 'settings') { deleting = merging = null; sinkHidden(); renderSettings(); }
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
