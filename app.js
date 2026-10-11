@@ -68,7 +68,7 @@ const today = () => dayNum(todayKey());
 
 /* ---------- Episodes ----------
  * Every item's logs are grouped into runs of consecutive days, oldest first. A headache is
- * usually a run of one day; a cold sore a run of several. A missed day splits a run, which
+ * usually a run of one day; a flare a run of several. A missed day splits a run, which
  * the "Was it still there?" prompt on the Log screen catches.
  */
 function episodesOf(it) {
@@ -219,13 +219,18 @@ function renderTagRow() {
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
 
-// First log of today after a 1–2 day gap: those days may just have been forgotten.
 // Learned per item: once it has 3+ finished episodes that typically last one day
-// (headaches, a drink), it has shown it doesn't run for days, so stop asking.
+// (headaches, a drink), it has shown it doesn't run for days.
+function lastsOneDay(it) {
+  const done = episodesOf(it).filter(ep => ep.end < today());
+  return done.length >= 3 && median(done.map(epLength)) === 1;
+}
+
+// First log of today after a 1–2 day gap: those days may just have been forgotten.
+// Not asked for things that last one day.
 function missedDays(it) {
   const t = today();
-  const done = episodesOf(it).filter(ep => ep.end < t);
-  if (done.length >= 3 && median(done.map(epLength)) === 1) return null;
+  if (lastsOneDay(it)) return null;
   const mine = db.entries.filter(e => e.itemId === it.id).map(e => dayNum(eDay(e)));
   if (mine.filter(n => n === t).length > 1) return null; // already asked at today's first log
   const days = new Set(mine);
@@ -448,7 +453,11 @@ const median = xs => {
 
 function episodeSection(it) {
   const eps = episodesOf(it);
-  if (!eps.some(ep => epLength(ep) > 1)) return null; // never runs for days: nothing to show
+  // No runs of days yet: explain what this section will show, until it's clear the item lasts one day.
+  if (!eps.some(ep => epLength(ep) > 1)) return lastsOneDay(it) ? null : h('div', { class: 'episodes' },
+    h('strong', {}, 'Episodes'),
+    h('p', { class: 'hint' }, 'If it lasts more than a day, tap it each day it\'s there. Days in a row count as one episode, ' +
+      'so you\'ll see how long each one lasts and how long you go between them. These are the questions a doctor usually asks.'));
   const last = eps.at(-1), ongoing = isOngoing(last);
   const done = ongoing ? eps.slice(0, -1) : eps; // an open episode's length isn't known yet
   const between = eps.slice(1).map((ep, i) => ep.start - eps[i].end - 1);
@@ -476,7 +485,7 @@ function episodeSection(it) {
 
 /* "What comes before it?": for each other item, how often it was logged in the window before
  * a symptom episode started, compared with how often it was logged before any day at all.
- * Only each episode's first day counts: what happened on day 5 of a cold sore isn't a trigger. */
+ * Only each episode's first day counts: what happened on day 5 of a flare isn't a trigger. */
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
