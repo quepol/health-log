@@ -35,7 +35,7 @@
           <li>Choose <strong>Add to Home Screen</strong></li>
           <li>Open <strong>Health Log</strong> from your Home Screen</li>
         </ol>
-        <p>Opening from the Home Screen saves your data on your phone instead of your browser.</p>
+        <p>From then on, use the Home Screen icon. It keeps its own data, separate from the browser.</p>
         <button id="install-skip" class="link-btn small-link">Continue in browser instead</button>
       </div>
       <div id="picker">
@@ -48,10 +48,8 @@
           <button class="secondary">Add</button>
         </form>
         <h2>Details you can add</h2>
-        <p class="hint">When you log something, you can note what else was going on — anything you think
-          might be connected, like stress or poor sleep. Over time, Patterns shows which ones come up most.</p>
-        <p class="hint">Tap to add or remove, or type your own below.
-          You can change them any time in <strong>Settings → Details</strong>.</p>
+        <p class="hint">When you log something, you can note what else was going on, like stress or poor sleep.
+          Patterns shows which ones come up most. Tap to choose, or add your own.</p>
         <div id="ob-tags" class="chips"></div>
         <form id="ob-tag-add" class="add-row">
           <input name="name" placeholder="Add your own detail" autocomplete="off">
@@ -90,9 +88,8 @@
         <input name="name" placeholder="e.g. Heartburn" required autocomplete="off">
         <button class="primary">Add</button>
       </form>
-      <p class="hint">Track anything you're curious about, not just symptoms: exercise, medicine, a late meal.
-        Tap it each time it happens. To see whether something tends to come before something else,
-        make it a button rather than a detail.</p>
+      <p class="hint">Not just symptoms: exercise, medicine, a late meal. To see if something tends to come
+        before a symptom, add it here and tap it every time. To combine two, rename one to match the other.</p>
 
       <h2 id="tags-heading">Details</h2>
       <div id="tags-list" class="list"></div>
@@ -100,9 +97,8 @@
         <input name="name" placeholder="e.g. Ate late" required autocomplete="off">
         <button class="primary">Add</button>
       </form>
-      <p class="hint">Note what else was going on when you log something, like Stress or Poor sleep.
-        Patterns shows which ones come up most for each thing you track. Hide any you don't use;
-        past entries keep them.</p>
+      <p class="hint">Things you can note when you log, like Stress or Poor sleep. Patterns shows which ones
+        come up most. Hiding one removes it from view, not from past entries.</p>
 
       <h2>Data</h2>
       <p id="backup-status"></p>
@@ -111,9 +107,9 @@
         <button id="import-btn" class="secondary">Import CSV</button>
         <input type="file" id="import" accept=".csv,text/csv" hidden>
       </div>
-      <p class="hint">Everything stays on this device. Export regularly: it is your backup.
-        Import merges and skips entries you already have.</p>
-      <p class="hint" id="storage-status"></p>
+      <p class="hint">Everything stays on this phone, so export regularly: that file is your backup.
+        Importing a backup adds anything that isn't already here, without creating duplicates.</p>
+      <p class="hint" id="storage-status" hidden></p>
       <button id="wipe" class="link-btn danger-link">Delete all data</button>
       <div id="wipe-confirm" class="card wipe" role="alertdialog" aria-labelledby="wipe-title" hidden>
         <p id="wipe-title"><strong>Delete everything on this device?</strong></p>
@@ -130,10 +126,9 @@
       <p class="hint">What it can't protect against:</p>
       <ul class="hint privacy">
         <li>Anyone who can unlock your phone can open the app and see your log.</li>
-        <li>The app is downloaded from its website and updates itself. If that site were ever
-          compromised, an update could be changed to read your data.</li>
-        <li>Exported CSV files aren't encrypted. Once saved or shared, they're only as safe as
-          wherever you put them.</li>
+        <li>The app updates itself from its website. If that site were hacked, an update could
+          read your data.</li>
+        <li>Exported files aren't encrypted. They're only as safe as wherever you keep them.</li>
       </ul>
       <p class="hint"><a href="https://github.com/quepol/health-log#privacy--security" target="_blank" rel="noopener">Full details</a></p>
     </section>
@@ -151,7 +146,7 @@
   <dialog id="edit">
     <form method="dialog">
       <h2 id="edit-title" tabindex="-1">Edit entry</h2>
-      <label>Item <select id="f-item"></select></label>
+      <label>What <select id="f-item"></select></label>
       <!-- Separate date and time: iOS's combined field won't shrink below its text and overflows at large sizes. -->
       <div class="datetime">
         <label>Date <input type="date" id="f-date" required></label>
