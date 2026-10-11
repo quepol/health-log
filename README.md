@@ -41,7 +41,7 @@ The app has two ideas:
   - **＋ Add new** adds a button right there. **+ Add past entry** backdates one.
 - **History:**
   - Every entry, newest first.
-  - Tap one to change what it was, its date, time, details or note, or to delete it.
+  - Tap one to change what it was, its date, time, details or note, or to delete it. **+ Add** under Details adds a new detail there too.
 - **Patterns:**
   - Days this month and last month for each thing you track.
   - Bar charts of **days** (not taps), switchable between Week, Month and Year.
