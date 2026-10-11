@@ -111,9 +111,9 @@
         <button id="import-btn" class="secondary">Import CSV</button>
         <input type="file" id="import" accept=".csv,text/csv" hidden>
       </div>
-      <p class="hint">Everything stays on this device. Export regularly: it is your backup.
-        Import merges and skips entries you already have.</p>
-      <p class="hint" id="storage-status"></p>
+      <p class="hint">Everything stays on this phone, so export regularly: that file is your backup.
+        Importing a backup adds anything that isn't already here, without creating duplicates.</p>
+      <p class="hint" id="storage-status" hidden></p>
       <button id="wipe" class="link-btn danger-link">Delete all data</button>
       <div id="wipe-confirm" class="card wipe" role="alertdialog" aria-labelledby="wipe-title" hidden>
         <p id="wipe-title"><strong>Delete everything on this device?</strong></p>

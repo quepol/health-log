@@ -87,6 +87,7 @@ To test a hunch, make it a button instead (Exercise, Medicine, Late meal…) and
 ## Back up your data
 
 Data lives only on the device, and browsers can clear website storage. Home Screen apps are mostly exempt, but Apple doesn't guarantee it.
+- **Persistent storage:** the app asks the browser to mark its storage as persistent, so it isn't cleared to free up space. If the browser says no, Settings shows a short warning under Data.
 - **Export:** use **Settings → Export CSV** regularly. On iPhone it opens the share sheet so you can save to Files or iCloud Drive.
 - **Reminder:** the Settings tab shows an orange dot when a backup is overdue.
 - **Import:** importing the same file twice won't create duplicates. Importing an older backup brings back anything you've deleted since.

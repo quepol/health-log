@@ -964,7 +964,9 @@ if (isNewDevice) onboard();
 
 // Ask the browser not to evict our data; report the result in Settings.
 navigator.storage?.persist?.().then(ok => {
-  $('#storage-status').textContent = ok ? 'Storage is marked persistent.' : 'Browser may clear storage under pressure: export regularly.';
+  // Only worth mentioning when refused; the details are in the README.
+  $('#storage-status').hidden = ok;
+  $('#storage-status').textContent = 'This phone may clear the app’s data if it runs low on space.';
 }).catch(() => {});
 
 /* Updates: the app opens instantly from its saved copy and checks for a new version at launch
