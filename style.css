@@ -127,7 +127,9 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .log-btn.ongoing .sub { color: var(--accent); font-weight: 600; }
 .empty { color: var(--muted); }
 .hidden-note { margin: 0 0 1rem; }
-.hidden-note .link-btn { margin: 0; min-height: 2.75rem; }
+.hidden-note .link-btn { margin: 0; min-height: 0; position: relative; }
+/* A tall button would stretch the line it sits on; this keeps the tap area big without that. */
+.hidden-note .link-btn::after { content: ''; position: absolute; inset: -.75rem -.5rem; }
 h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 
 /* Trigger chips */
