@@ -401,10 +401,10 @@ function renderPatterns() {
       showHidden ? 'Leave them out' : 'Include them')) : null;
   const items = db.items.filter(it => (showHidden || !it.archived) && (!it.archived || used(it)));
   if (!db.entries.some(e => items.some(it => it.id === e.itemId))) {
-    return out.replaceChildren(h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note);
+    return out.replaceChildren(...[h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note].filter(Boolean));
   }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  out.replaceChildren(note, monthSummary(items, byItem), scaleSwitch(),
+  out.replaceChildren(...[note, monthSummary(items, byItem), scaleSwitch()].filter(Boolean),
     ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
 }
 
