@@ -206,34 +206,44 @@ function logNow(itemId) {
   ]);
 }
 
+// "+ Add" chip that opens an input in place. The detail is saved to the list straight away
+// (a hidden one with that name comes back) and handed to onAdd. Not a <form>: the edit sheet
+// is already one, so Enter is handled here rather than submitting the sheet.
+function addDetailChip(onAdd) {
+  const add = h('button', { type: 'button', class: 'chip add-chip' }, '+ Add');
+  add.addEventListener('click', () => {
+    const input = h('input', { placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off', enterkeyhint: 'done' });
+    const submit = () => {
+      const v = cleanName(input.value);
+      if (!v) return input.focus();
+      let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
+      if (t) t.archived = false; else db.tags.push(t = named(v));
+      save();
+      onAdd(t);
+    };
+    input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
+    add.replaceWith(h('div', { class: 'add-row' }, input, h('button', { type: 'button', class: 'primary', onclick: submit }, 'Add')));
+    input.focus();
+  });
+  return add;
+}
+
+// A detail typed but not yet added when the person moves on (Save, Done) is added, not dropped.
+const addTyped = sel => { if ($(`${sel} .add-row input`)?.value.trim()) $(`${sel} .add-row button`).click(); };
+
 function renderTagRow() {
   const e = entryById(lastLoggedId);
   $('#tagrow').hidden = !e;
   if (!e) return;
   $('#tagrow-label').textContent = 'What else was going on?';
-  const add = h('button', { type: 'button', class: 'chip add-chip' }, '+ Add');
-  add.addEventListener('click', () => {
-    const form = h('form', { class: 'add-row' },
-      h('input', { name: 'name', placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off' }),
-      h('button', { class: 'primary' }, 'Add'));
-    form.addEventListener('submit', ev => {
-      ev.preventDefault();
-      const v = cleanName(form.elements.name.value);
-      if (!v) return form.elements.name.focus();
-      // A new detail is added to the list and to what was just logged; a hidden one comes back.
-      let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
-      if (t) t.archived = false; else db.tags.push(t = named(v));
-      if (!e.tagIds.includes(t.id)) e.tagIds.push(t.id);
-      save();
-      renderAll();
-    });
-    add.replaceWith(form);
-    form.elements.name.focus();
-  });
   $('#tagrow-chips').replaceChildren(...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
     e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
     save();
-  })), add);
+  })), addDetailChip(t => {
+    if (!e.tagIds.includes(t.id)) e.tagIds.push(t.id);
+    save();
+    renderAll();
+  }));
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
 
@@ -303,8 +313,7 @@ function openEdit(id) {
   $('#f-date').value = ts.slice(0, 10);
   $('#f-time').value = ts.slice(11, 16);
   editTags = new Set(e ? e.tagIds : []);
-  $('#f-tags').replaceChildren(...db.tags.filter(t => !t.archived || editTags.has(t.id))
-    .map(t => chip(t.name, editTags.has(t.id), on => on ? editTags.add(t.id) : editTags.delete(t.id))));
+  renderEditTags();
   $('#f-note').value = e?.note || '';
   $('#f-delete').hidden = !e;
   $('#edit').returnValue = '';
@@ -314,8 +323,15 @@ function openEdit(id) {
   (e ? $('#edit-title') : $('#f-item')).focus();
 }
 
+function renderEditTags() {
+  $('#f-tags').replaceChildren(...db.tags.filter(t => !t.archived || editTags.has(t.id))
+    .map(t => chip(t.name, editTags.has(t.id), on => on ? editTags.add(t.id) : editTags.delete(t.id))),
+    addDetailChip(t => { editTags.add(t.id); renderEditTags(); renderSettings(); renderTagRow(); }));
+}
+
 $('#edit').addEventListener('close', () => {
   if ($('#edit').returnValue !== 'save') return;
+  addTyped('#f-tags');
   const input = `${$('#f-date').value}T${$('#f-time').value}`;
   const d = new Date(input);
   if (!$('#f-item').value || isNaN(d)) return;
@@ -719,7 +735,7 @@ function show(view) {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));
 document.querySelectorAll('.add-past').forEach(b => b.addEventListener('click', () => openEdit(null)));
-$('#tagrow-close').addEventListener('click', dismissTagRow);
+$('#tagrow-done').addEventListener('click', () => { addTyped('#tagrow-chips'); dismissTagRow(); });
 
 function renderAll() {
   renderLog();

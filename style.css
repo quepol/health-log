@@ -131,7 +131,9 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 }
 .gapask { border: 2px solid var(--accent); }
 .gapask p { margin: 0 0 .6rem; font-weight: 600; }
-.tagrow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; font-weight: 600; }
+.tagrow-head { margin-bottom: .6rem; font-weight: 600; }
+.tagrow-foot { display: flex; justify-content: flex-end; margin-top: .75rem; }
+.done-btn { min-height: 2.75rem; padding: 0 1.4rem; background: transparent; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; }
 .chip { min-height: 2.75rem; border-radius: 999px; background: var(--surface-2); border-color: transparent; }
 .chip[aria-pressed="true"] { background: var(--chip-on); color: var(--accent-text); font-weight: 600; }
