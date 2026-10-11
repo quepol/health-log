@@ -572,6 +572,8 @@ function precedeCard(items) {
 const cleanName = s => s.replace(/;/g, ',').trim(); // ';' separates tags in the CSV
 const nameTaken = (list, name, self) => list.some(x => x !== self && x.name.toLowerCase() === name.toLowerCase());
 
+let deleting = null; // id of the hidden row whose delete confirmation is open
+
 function renderList(list, el) {
   el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
     h('input', {
@@ -582,12 +584,51 @@ function renderList(list, el) {
       },
     }),
     // Kept together so that, when the row is too narrow, they wrap as one group under the name.
+    // Hidden rows swap the arrows for Delete: hiding first is the step that keeps deleting deliberate.
     h('div', { class: 'row-actions' },
-      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
-      h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-      // Hidden items leave the Log screen / trigger row; their history stays.
-      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; save(); renderAll(); } },
-        x.archived ? 'Show' : 'Hide')))));
+      !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
+      !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
+      // Hidden items leave the Log screen / details row; their history stays.
+      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; deleting = null; save(); renderAll(); } },
+        x.archived ? 'Show' : 'Hide'),
+      x.archived && h('button', { class: 'small danger', 'aria-label': `Delete ${x.name}`, onclick: () => askDelete(list, x) }, 'Delete')),
+    deleting === x.id && deleteConfirm(list, x))));
+}
+
+const isItemList = list => list === db.items;
+const usedBy = (list, x) => db.entries.filter(e => isItemList(list) ? e.itemId === x.id : e.tagIds.includes(x.id));
+
+// Unused: delete at once, with Undo (nothing is lost). Used: confirm first, saying what goes.
+function askDelete(list, x) {
+  if (usedBy(list, x).length) { deleting = x.id; return renderSettings(); }
+  const i = list.indexOf(x);
+  list.splice(i, 1);
+  deleting = null;
+  save();
+  renderAll();
+  toast(`Deleted ${x.name}`, [['Undo', () => { list.splice(Math.min(i, list.length), 0, x); save(); renderAll(); }]]);
+}
+
+function deleteConfirm(list, x) {
+  const n = usedBy(list, x).length, entries = `${n} ${n === 1 ? 'entry' : 'entries'}`;
+  const [title, detail] = isItemList(list)
+    ? [`Delete ${x.name} and its ${entries}?`, `This can’t be undone.${backupStale() ? ' Export a CSV first if you might want them back.' : ''}`]
+    : [`Remove ${x.name}?`, `It’ll be taken off ${entries}; the entries themselves stay. This can’t be undone.`];
+  return h('div', { class: 'card wipe del-confirm', role: 'alertdialog', 'aria-label': title },
+    h('p', {}, h('strong', {}, title)),
+    h('p', {}, detail),
+    h('div', { class: 'row' },
+      h('button', { class: 'danger-solid', onclick: () => {
+        if (isItemList(list)) db.entries = db.entries.filter(e => e.itemId !== x.id);
+        else for (const e of db.entries) e.tagIds = e.tagIds.filter(id => id !== x.id);
+        if (!entryById(lastLoggedId)) { lastLoggedId = null; gapAsk = null; }
+        list.splice(list.indexOf(x), 1);
+        deleting = null;
+        save();
+        renderAll();
+        toast(`${isItemList(list) ? 'Deleted' : 'Removed'} ${x.name}`);
+      } }, isItemList(list) ? 'Delete' : 'Remove'),
+      h('button', { class: 'secondary', onclick: () => { deleting = null; renderSettings(); } }, 'Cancel')));
 }
 
 // One line per row only while every name is fully visible; otherwise the whole list
@@ -633,15 +674,19 @@ function bindAdd(form, list, make) {
 bindAdd($('#add-item'), db.items, named);
 bindAdd($('#add-tag'), db.tags, named);
 
+const exportAge = () => db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
+// Nag only once there's something worth losing: 30 days since the last export,
+// or (never exported) the oldest entry is over two weeks old.
+function backupStale() {
+  const days = exportAge(), oldest = Math.min(...db.entries.map(e => Date.parse(e.ts)));
+  return db.entries.length > 0 && (days === null ? Date.now() - oldest > 14 * 864e5 : days > 30);
+}
+
 function renderSettings() {
   renderList(db.items, $('#items-list'));
   renderList(db.tags, $('#tags-list'));
   fitLists();
-  const days = db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
-  // Nag only once there's something worth losing: 30 days since the last export,
-  // or (never exported) the oldest entry is over two weeks old.
-  const oldest = Math.min(...db.entries.map(e => Date.parse(e.ts)));
-  const stale = db.entries.length > 0 && (days === null ? Date.now() - oldest > 14 * 864e5 : days > 30);
+  const days = exportAge(), stale = backupStale();
   $('#backup-status').textContent = days === null ? 'Never exported.' : `Last export: ${days === 0 ? 'today' : plural(days, 'day') + ' ago'}.`;
   $('#backup-status').classList.toggle('warn', stale);
   document.querySelector('[data-view="settings"]').classList.toggle('warn', stale);
@@ -742,7 +787,7 @@ function show(view) {
   for (const v of Object.keys(TITLES)) $(`#view-${v}`).hidden = v !== view;
   $('#title').textContent = TITLES[view];
   if (view !== 'log') dismissTagRow(); else fitGrid();
-  if (view === 'settings') { sinkHidden(); fitLists(); }
+  if (view === 'settings') { deleting = null; sinkHidden(); renderSettings(); }
   scrollTo(0, 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.view)));

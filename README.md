@@ -50,6 +50,7 @@ The app has two ideas:
   - **What tends to come before it?** compares what you track against each other.
 - **Settings:**
   - **What you track** and **Details**: rename, reorder (↑ ↓), **Hide** or **Show**. Hidden ones are struck through and leave the Log screen, but past entries keep them. Next time you open Settings, they move to the bottom of the list.
+  - **Delete** appears on hidden rows only, so deleting always takes two deliberate steps. Something never logged is deleted at once, with Undo. Otherwise a confirmation says what goes: deleting something you track deletes its entries too; removing a detail takes it off its entries but keeps them.
   - **Data**: Export CSV, Import CSV, and **Delete all data** (with a confirmation step).
 
 ### Episodes
@@ -87,7 +88,7 @@ To test a hunch, make it a button instead (Exercise, Medicine, Late meal…) and
 Data lives only on the device, and browsers can clear website storage. Home Screen apps are mostly exempt, but Apple doesn't guarantee it.
 - **Export:** use **Settings → Export CSV** regularly. On iPhone it opens the share sheet so you can save to Files or iCloud Drive.
 - **Reminder:** the Settings tab shows an orange dot when a backup is overdue.
-- **Import:** importing the same file twice won't create duplicates.
+- **Import:** importing the same file twice won't create duplicates. Importing an older backup brings back anything you've deleted since.
 
 **CSV format:** `timestamp,item,tags,note`.
 - `item` is the thing you tracked, and `tags` are its details, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.

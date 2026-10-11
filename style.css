@@ -83,8 +83,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .add-form .row { justify-content: center; }
 #ob-import { display: block; width: 100%; text-align: center; line-height: 1.4; margin-top: 2rem; font-size: .9rem; }
 .danger-solid { background: var(--danger); border-color: var(--danger); color: var(--bg); font-weight: 700; }
-.wipe { margin-top: .75rem; border-color: var(--danger); }
+.card.wipe { margin-top: .75rem; border-color: var(--danger); }
 .wipe p { margin: 0 0 .6rem; }
+.card.del-confirm { flex-basis: 100%; margin: .2rem 0 .6rem; }
 .card > h2:first-child { margin-top: 0; }
 #install-hint h2 { font-size: 1.4rem; margin-bottom: .4rem; }
 #install-hint h3 { margin: 1.25rem 0 .5rem; }
