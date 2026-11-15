@@ -41,18 +41,10 @@
       <div id="picker">
         <h2>What do you want to keep track of?</h2>
         <p class="hint">Symptoms, exercise, anything you want to keep an eye on. Each one becomes a button
-          you tap when it happens. You can change these any time in <strong>Settings → What you track</strong>.</p>
+          you tap when it happens. After you log, you can note details like stress or poor sleep.</p>
         <div id="ob-items" class="chips"></div>
         <form id="ob-add" class="add-row">
           <input name="name" placeholder="Add your own" autocomplete="off">
-          <button class="secondary">Add</button>
-        </form>
-        <h2>Details you can add</h2>
-        <p class="hint">When you log something, you can note what else was going on, like stress or poor sleep.
-          Patterns shows which ones come up most. Tap to choose, or add your own.</p>
-        <div id="ob-tags" class="chips"></div>
-        <form id="ob-tag-add" class="add-row">
-          <input name="name" placeholder="Add your own detail" autocomplete="off">
           <button class="secondary">Add</button>
         </form>
         <button id="ob-start" class="primary ob-start">Start logging</button>
@@ -63,6 +55,7 @@
     <section id="view-log" class="view">
       <div id="grid" class="grid"></div>
       <div id="gapask" class="tagrow gapask" role="alert" hidden></div>
+      <div id="againask" class="tagrow gapask" role="alert" hidden></div>
       <div id="tagrow" class="tagrow" hidden>
         <div id="tagrow-label" class="tagrow-head"></div>
         <div id="tagrow-chips" class="chips"></div>

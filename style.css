@@ -101,7 +101,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 body.onboarding .tabs { display: none; }
 body.installing .top { display: none; }
 body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
-.ob-start { width: 100%; margin-top: 1.5rem; min-height: 3.5rem; font-size: 1.1rem; }
+/* Sticky: at large text sizes the picker can outgrow the screen, and people don't always scroll. */
+.ob-start {
+  position: sticky; bottom: calc(env(safe-area-inset-bottom) + .75rem); z-index: 2;
+  width: 100%; margin-top: 1.5rem; min-height: 3.5rem; font-size: 1.1rem;
+  box-shadow: 0 0 0 6px var(--bg);
+}
+/* Sticky over text, so the usual translucent disabled look won't do: solid grey instead. */
+.ob-start:disabled { opacity: 1; background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
 .icon-btn { min-width: 3rem; padding: 0; font-size: 1.3rem; }
 .small { min-height: 2.75rem; padding: 0 .75rem; font-size: .9rem; }
 .row { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
@@ -143,6 +150,7 @@ h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 .gapask { border: 2px solid var(--accent); }
 .gapask p { margin: 0 0 .6rem; font-weight: 600; }
 .tagrow-head { margin-bottom: .6rem; font-weight: 600; }
+.tagrow-hint { flex-basis: 100%; margin: .25rem 0 0; }
 .tagrow-foot { display: flex; justify-content: flex-end; margin-top: .75rem; }
 .done-btn { min-height: 2.75rem; padding: 0 1.4rem; background: transparent; border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: .5rem; }

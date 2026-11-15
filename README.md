@@ -14,11 +14,12 @@ The app has two ideas:
 ### Screens
 
 - **Setup (first launch):**
-  - Suggests things to track (Headache, Back pain, Exercise) and details (Stress, Poor sleep, Dehydrated). Nothing is pre-selected, and you can add your own. You can also import a backup file instead.
+  - One question: what do you want to keep track of? It suggests Headache, Back pain and Exercise; nothing is pre-selected, and you can add your own. **Start logging** stays visible at the bottom at any text size. You can also import a backup file instead.
   - Opened in the browser on an iPhone, it first shows 3 steps to add it to the Home Screen, because the Home Screen app keeps its own data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
-  - Then tap any details that apply, or add one. **Done** puts the box away.
+  - Then tap any details that apply, or add one. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter details (Stress, Poor sleep) are ready as choices.
+  - Tapping the same button again within 10 minutes asks first ("Headache again? You logged it 2 minutes ago."), since a quick second tap is usually a slip.
   - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
   - **＋ Add new** adds a button. **+ Add past entry** backdates one.
 - **History:** every entry, newest first. Tap one to change or delete it.

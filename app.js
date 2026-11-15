@@ -10,7 +10,7 @@
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
 const SUGGESTED_ITEMS = ['Headache', 'Back pain', 'Exercise'];
-const SEED_TAGS = ['Stress', 'Poor sleep', 'Dehydrated'];
+const SEED_TAGS = ['Stress', 'Poor sleep'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const named = name => ({ id: uid(), name, archived: false });
@@ -192,7 +192,33 @@ function addTile() {
   return tile;
 }
 
-function logNow(itemId) {
+// A quick second tap on the same button is usually a slip (or someone exploring), so ask first.
+let againAsk = null; // { itemId, minutes }
+
+function renderAgainAsk() {
+  const card = $('#againask');
+  card.hidden = !againAsk;
+  if (!againAsk) return;
+  const it = itemById(againAsk.itemId), m = againAsk.minutes;
+  const close = () => { againAsk = null; renderAgainAsk(); };
+  card.replaceChildren(
+    h('p', {}, `${it.name} again? You logged it ${m < 1 ? 'just now' : plural(Math.round(m), 'minute') + ' ago'}.`),
+    h('div', { class: 'row' },
+      h('button', { class: 'primary', onclick: () => { close(); logNow(it.id, true); } }, 'Log it again'),
+      h('button', { class: 'secondary', onclick: close }, 'Cancel')));
+}
+
+function logNow(itemId, confirmed) {
+  const last = Math.max(...db.entries.filter(e => e.itemId === itemId).map(e => Date.parse(e.ts)), 0);
+  const minutes = (Date.now() - last) / 60000;
+  if (!confirmed && last && minutes < 10 && minutes > -1) {
+    againAsk = { itemId, minutes };
+    lastLoggedId = null; gapAsk = null;
+    hideToast(); // its Undo would make "you logged it just now" wrong
+    renderAll();
+    return;
+  }
+  againAsk = null;
   const e = { id: uid(), itemId, ts: isoLocal(new Date()), tagIds: [], note: '' };
   db.entries.push(e);
   save();
@@ -209,20 +235,25 @@ function logNow(itemId) {
 // "+ Add" chip that opens an input in place. The detail is saved to the list straight away
 // (a hidden one with that name comes back) and handed to onAdd. Not a <form>: the edit sheet
 // is already one, so Enter is handled here rather than submitting the sheet.
+function detailInput(onAdd) {
+  const input = h('input', { placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off', enterkeyhint: 'done' });
+  const submit = () => {
+    const v = cleanName(input.value);
+    if (!v) return input.focus();
+    let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
+    if (t) t.archived = false; else db.tags.push(t = named(v));
+    save();
+    onAdd(t);
+  };
+  input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
+  return [h('div', { class: 'add-row' }, input, h('button', { type: 'button', class: 'primary', onclick: submit }, 'Add')), input];
+}
+
 function addDetailChip(onAdd) {
   const add = h('button', { type: 'button', class: 'chip add-chip' }, '+ Add');
   add.addEventListener('click', () => {
-    const input = h('input', { placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off', enterkeyhint: 'done' });
-    const submit = () => {
-      const v = cleanName(input.value);
-      if (!v) return input.focus();
-      let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
-      if (t) t.archived = false; else db.tags.push(t = named(v));
-      save();
-      onAdd(t);
-    };
-    input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
-    add.replaceWith(h('div', { class: 'add-row' }, input, h('button', { type: 'button', class: 'primary', onclick: submit }, 'Add')));
+    const [row, input] = detailInput(onAdd);
+    add.replaceWith(row);
     input.focus();
   });
   return add;
@@ -236,16 +267,23 @@ function renderTagRow() {
   $('#tagrow').hidden = !e;
   if (!e) return;
   $('#tagrow-label').textContent = 'What else was going on?';
-  $('#tagrow-chips').replaceChildren(...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
-    e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
-    save();
-  })), addDetailChip(t => {
+  const onAdd = t => {
     if (!e.tagIds.includes(t.id)) e.tagIds.push(t.id);
     save();
     renderAll();
-  }));
+  };
+  // Their very first log: open the text box (no tap on "+ Add" needed) and explain details once.
+  const firstTime = db.entries.length === 1;
+  $('#tagrow-chips').replaceChildren(
+    ...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
+      e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
+      save();
+    })),
+    firstTime ? detailInput(onAdd)[0] : addDetailChip(onAdd),
+    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Note what else was going on — anything that might be ' +
+      'connected, like stress or poor sleep. Patterns shows which ones come up most.'));
 }
-const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; renderTagRow(); renderGapAsk(); };
+const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; againAsk = null; renderTagRow(); renderGapAsk(); renderAgainAsk(); };
 
 // Learned per item: once it has 3+ finished episodes that typically last one day
 // (headaches, a drink), it has shown it doesn't run for days.
@@ -892,6 +930,7 @@ $('#tagrow-done').addEventListener('click', () => { addTyped('#tagrow-chips'); d
 function renderAll() {
   renderLog();
   renderGapAsk();
+  renderAgainAsk();
   renderTagRow();
   renderHistory();
   renderPatterns();
@@ -900,7 +939,7 @@ function renderAll() {
 
 // Coming back to the app later: refresh "this month" counts, drop the stale trigger row.
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { lastLoggedId = null; gapAsk = null; renderAll(); }
+  if (document.visibilityState === 'visible') { lastLoggedId = null; gapAsk = null; againAsk = null; renderAll(); }
 });
 // Another open tab changed the data.
 addEventListener('storage', ev => {
@@ -919,9 +958,6 @@ function onboard() {
   const names = [...SUGGESTED_ITEMS];
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
-  const tagNames = [...SEED_TAGS];
-  const tags = new Set(); // nothing pre-selected, same as the buttons above
-
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
       on ? picked.add(n) : picked.delete(n);
@@ -930,17 +966,6 @@ function onboard() {
     $('#ob-start').disabled = !picked.size;
   };
   renderItems();
-  const renderTags = () => $('#ob-tags').replaceChildren(...tagNames.map(t => chip(t, tags.has(t), on => on ? tags.add(t) : tags.delete(t))));
-  renderTags();
-  $('#ob-tag-add').addEventListener('submit', ev => {
-    ev.preventDefault();
-    const v = cleanName(ev.target.elements.name.value);
-    if (!v) return;
-    tags.add(tagNames.find(n => sameName(n, v)) || (tagNames.push(v), v));
-    ev.target.reset();
-    renderTags();
-  });
-
   $('#ob-add').addEventListener('submit', ev => {
     ev.preventDefault();
     const v = cleanName(ev.target.elements.name.value);
@@ -951,10 +976,10 @@ function onboard() {
     renderItems();
   });
 
-  // Mutate in place: the Settings add-forms hold references to these arrays.
-  const addTags = () => db.tags.push(...tagNames.filter(t => tags.has(t) && !db.tags.some(x => sameName(x.name, t))).map(named));
+  // Mutate in place: the Settings add-forms hold references to these arrays. Details aren't
+  // picked at setup; the starters are just made available for the first "What else was going on?".
   const done = () => {
-    addTags();
+    db.tags.push(...SEED_TAGS.filter(t => !db.tags.some(x => sameName(x.name, t))).map(named));
     save();
     finishOnboarding = null;
     history.replaceState(null, '', location.pathname);
