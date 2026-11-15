@@ -10,7 +10,7 @@
 const KEY = 'healthlog.v1';
 // Offered on the first-launch picker; nothing is tracked until the person picks.
 const SUGGESTED_ITEMS = ['Headache', 'Back pain', 'Exercise'];
-const SEED_TAGS = ['Stress', 'Poor sleep', 'Dehydrated'];
+const SEED_TAGS = ['Stress', 'Poor sleep'];
 
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 const named = name => ({ id: uid(), name, archived: false });
