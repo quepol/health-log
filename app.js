@@ -461,8 +461,12 @@ function renderPatterns() {
     return out.replaceChildren(...[h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note].filter(Boolean));
   }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  out.replaceChildren(...[note, monthSummary(items, byItem), scaleSwitch()].filter(Boolean),
-    ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items));
+  // The comparison is the payoff, so it sits right under the summary once it has something to
+  // say; until then (fewer than two things with data) its explainer stays at the bottom.
+  const compare = precedeCard(items);
+  const hasRows = items.filter(it => byItem.get(it.id).length).length >= 2;
+  out.replaceChildren(...[note, monthSummary(items, byItem), hasRows && compare, scaleSwitch(),
+    ...items.map(it => itemCard(it, byItem.get(it.id))), !hasRows && compare].filter(Boolean));
 }
 
 function monthSummary(items, byItem) {
@@ -578,17 +582,19 @@ function episodeSection(it) {
     between.length && `Typically ${plural(median(between), 'day')} between episodes.`,
   ].filter(Boolean);
 
-  const recent = eps.slice(-8).reverse();
+  // The dated list earns its place only when episodes span days; for one-day items the chart
+  // above already shows when, so the stat lines are enough.
+  const recent = median(done.length ? done.map(epLength) : [1]) > 1 ? eps.slice(-5).reverse() : [];
   return h('div', { class: 'episodes' },
     h('strong', {}, 'Episodes'),
     lines.map(l => h('p', { class: 'ep-stat' }, l)),
-    h('ul', { class: 'ep-list' }, recent.map(ep => {
+    recent.length > 0 && h('ul', { class: 'ep-list' }, recent.map(ep => {
       const tags = [...ep.tagIds].map(tagById).filter(shownTag).map(t => t.name).join(', ');
       const range = ep.start === ep.end ? fmt(ep.start) : `${fmt(ep.start)} – ${fmt(ep.end)}`;
       const len = ongoing && ep === last ? `day ${today() - ep.start + 1}, ongoing` : plural(epLength(ep), 'day');
       return h('li', {}, h('span', { class: 'ep-range' }, range), ` · ${len} · ${plural(ep.logs, 'log')}`, tags && h('span', { class: 'meta' }, ` · ${tags}`));
     })),
-    eps.length > recent.length && h('p', { class: 'hint' }, `…and ${eps.length - recent.length} earlier.`));
+    recent.length > 0 && eps.length > recent.length && h('p', { class: 'hint' }, `…and ${eps.length - recent.length} earlier.`));
 }
 
 /* "What comes before it?": for each other item, how often it was logged in the window before
@@ -598,7 +604,7 @@ function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
     return h('div', { class: 'card' }, h('h3', {}, 'What tends to come before it?'),
-      h('p', { class: 'hint' }, 'Track a few things as buttons, like Exercise or a late meal, and this will show which ones tend to come before your symptoms.'));
+      h('p', { class: 'hint' }, 'Track a few things, like Exercise or a late meal, and this will show which ones tend to come before your symptoms.'));
   }
   if (!withData.some(it => it.id === precede.symptomId)) precede.symptomId = withData[0].id;
 
