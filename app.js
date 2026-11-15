@@ -461,12 +461,14 @@ function renderPatterns() {
     return out.replaceChildren(...[h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note].filter(Boolean));
   }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  // The comparison is the payoff, so it sits right under the summary once it has something to
-  // say; until then (fewer than two things with data) its explainer stays at the bottom.
+  // The comparison is the payoff, so it sits right under the summary once it has something
+  // worth saying: two things with data, and something with 5+ episodes (the same threshold as
+  // its "Too few to read much into yet" line). Until then it stays at the bottom.
   const compare = precedeCard(items);
-  const hasRows = items.filter(it => byItem.get(it.id).length).length >= 2;
-  out.replaceChildren(...[note, monthSummary(items, byItem), hasRows && compare, scaleSwitch(),
-    ...items.map(it => itemCard(it, byItem.get(it.id))), !hasRows && compare].filter(Boolean));
+  const promote = items.filter(it => byItem.get(it.id).length).length >= 2
+    && items.some(it => episodesOf(it).length >= 5);
+  out.replaceChildren(...[note, monthSummary(items, byItem), promote && compare, scaleSwitch(),
+    ...items.map(it => itemCard(it, byItem.get(it.id))), !promote && compare].filter(Boolean));
 }
 
 function monthSummary(items, byItem) {
