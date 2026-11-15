@@ -1037,6 +1037,58 @@ addEventListener('storage', ev => {
  */
 let finishOnboarding = null; // set while the first-launch picker is showing
 
+/* ---------- Install advice, tailored to the device ----------
+ * Best effort from the user agent; menus move between versions, so wording names the button. */
+function detectDevice() {
+  const ua = navigator.userAgent;
+  const ipad = /iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const os = /iPhone|iPod/.test(ua) || ipad ? 'ios' : /Android/.test(ua) ? 'android' : 'desktop';
+  // Browsers built into other apps (a link tapped in Instagram, Facebook, Gmail...) can't install.
+  const inApp = /FBAN|FBAV|FB_IAB|Instagram|LinkedInApp|Line\/|GSA\/|MicroMessenger|Snapchat|Pinterest|Twitter/.test(ua)
+    || (os === 'android' && /; wv\)/.test(ua));
+  const browser = os === 'ios'
+    ? (/CriOS/.test(ua) ? 'chrome' : /FxiOS|EdgiOS|OPiOS/.test(ua) ? 'other' : 'safari')
+    : /SamsungBrowser/.test(ua) ? 'samsung' : /Firefox/.test(ua) ? 'firefox' : 'chrome';
+  const installed = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  return { os, ipad, inApp, browser, installed };
+}
+
+// Chrome and Edge (Android and computers) offer their own install prompt; keep it for a button.
+let installPrompt = null, renderInstallNote = () => {};
+addEventListener('beforeinstallprompt', ev => { ev.preventDefault(); installPrompt = ev; renderInstallNote(); });
+addEventListener('appinstalled', () => { installPrompt = null; $('#install-note').hidden = true; });
+
+function installNote(dev) {
+  const note = $('#install-note');
+  const button = (cls = 'primary', label = 'Install') => h('button', { class: cls, onclick: async () => {
+    const p = installPrompt; if (!p) return;
+    p.prompt();
+    const { outcome } = await p.userChoice.catch(() => ({}));
+    if (outcome === 'accepted') { installPrompt = null; note.hidden = true; }
+  } }, label);
+  let kids = null;
+  if (dev.installed) kids = null;
+  else if (dev.inApp) kids = [
+    h('h3', {}, 'Open this page in your browser first'),
+    h('p', { class: 'hint' }, 'Links opened inside apps like Instagram, Facebook or Gmail use the app’s own browser, ' +
+      'which can’t add Health Log to your ' + (dev.os === 'ios' ? 'Home Screen' : 'home screen') + ' and may not keep what you log.'),
+    h('p', { class: 'hint' }, ...(dev.os === 'ios'
+      ? ['Tap ⋯ or the share icon, then ', h('strong', {}, 'Open in Safari'), '.']
+      : ['Tap ⋮, then ', h('strong', {}, 'Open in Chrome'), ' (or ', h('strong', {}, 'Open in browser'), ').']))];
+  else if (dev.os === 'android') kids = [
+    h('h3', {}, 'Install Health Log'),
+    h('p', { class: 'hint' }, 'For one-tap access from your home screen. Optional: what you log is kept either way.'),
+    installPrompt ? button() : h('p', { class: 'hint' }, ...({
+      samsung: ['Open the menu ≡, then ', h('strong', {}, 'Add page to'), ' → ', h('strong', {}, 'Home screen'), '.'],
+      firefox: ['Open the menu ⋮, then ', h('strong', {}, 'Install'), '.'],
+    }[dev.browser] || ['Open the menu ⋮, then ', h('strong', {}, 'Add to Home screen'), ' (or ', h('strong', {}, 'Install app'), ').']))];
+  else if (dev.os === 'desktop' && installPrompt) kids = [
+    h('p', { class: 'hint' }, 'You can also install Health Log as an app on this computer. ', button('link-btn', 'Install app'))];
+  note.hidden = !kids;
+  note.classList.toggle('quiet', dev.os === 'desktop');
+  if (kids) note.replaceChildren(...kids);
+}
+
 function onboard() {
   const sameName = (a, b) => a.toLowerCase() === b.toLowerCase();
   const pre = (new URLSearchParams(location.search).get('track') || '').split(',').map(cleanName).filter(Boolean);
@@ -1081,18 +1133,26 @@ function onboard() {
   $('#ob-import').addEventListener('click', () => $('#import').click());
   finishOnboarding = () => { if (db.entries.length) done(); };
 
-  // iPhone Safari and the Home Screen app have separate storage: set up inside the installed app.
-  const iOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const installed = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-  const needsInstall = iOS && !installed;
+  // How to install depends on the device. iPhone matters most: the Home Screen app keeps its own
+  // data, separate from the browser, so setup waits for it there. Android and computers share data
+  // between browser and installed app, so installing is an optional extra above setup.
+  const dev = detectDevice();
+  const needsInstall = dev.os === 'ios' && !dev.installed && !dev.inApp;
   $('#install-hint').hidden = !needsInstall;
   $('#picker').hidden = needsInstall;
   document.body.classList.toggle('installing', needsInstall); // the card has its own heading
+  $('#share-where').textContent = {
+    safari: dev.ipad ? '(at the top right of the screen)' : '(at the bottom of the screen, or in the ⋯ menu)',
+    chrome: '(in the address bar at the top)',
+    other: '(in the browser’s menu)',
+  }[dev.browser] || '(in the browser’s menu)';
   $('#install-skip').addEventListener('click', () => {
     $('#install-hint').hidden = true;
     $('#picker').hidden = false;
     document.body.classList.remove('installing');
   });
+  renderInstallNote = () => installNote(dev);
+  renderInstallNote();
 
   document.body.classList.add('onboarding');
   show('onboard');

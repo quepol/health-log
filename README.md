@@ -15,7 +15,8 @@ The app has two ideas:
 
 - **Setup (first launch):**
   - One question: what do you want to keep track of? It suggests Headache, Back pain and Exercise; nothing is pre-selected, and you can add your own. **Start logging** stays visible at the bottom at any text size. You can also import a backup file instead.
-  - Opened in the browser on an iPhone, it first shows 3 steps to add it to the Home Screen, because the Home Screen app keeps its own data.
+  - Install advice depends on the device. On iPhone, setup waits for a 3-step "Add to Home Screen" card, worded for Safari, Chrome or other browsers, because the Home Screen app keeps its own data. On Android, an optional "Install Health Log" card sits above setup, with an **Install** button where the browser offers one, since the browser and installed app share data. On a computer, a quiet "Install app" link appears only where the browser offers it.
+  - Opened inside another app's built-in browser (a link tapped in Instagram, Facebook, Gmail...), a note above setup says to open the page in Safari or Chrome first: those browsers can't install apps and may not keep data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
   - Then tap any details that apply, or add one. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter details (Stress, Poor sleep) are ready as choices.

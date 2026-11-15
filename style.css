@@ -120,6 +120,13 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .steps { margin: 0 0 1rem; padding-left: 1.4rem; }
 .steps li { margin-bottom: .6rem; padding-left: .2rem; }
 .steps .hint { display: block; font-size: .85rem; }
+.install-note { margin: 0 0 1.25rem; }
+.install-note h3 { margin: 0 0 .35rem; }
+.install-note p { margin: 0 0 .5rem; }
+.install-note > :last-child { margin-bottom: 0; }
+.install-note.quiet { border: 0; background: none; padding: 0; }
+.install-note .link-btn { margin: 0; min-height: 0; }
+.install-note .primary { min-height: 2.75rem; margin-top: .25rem; }
 .share-icon { width: 1.2em; height: 1.2em; vertical-align: -.2em; fill: none; stroke: var(--accent); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 body.onboarding .tabs { display: none; }
 body.installing .top { display: none; }

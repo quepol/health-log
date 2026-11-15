@@ -35,7 +35,7 @@
         <ol class="steps">
           <li>Tap <strong>Share</strong>
             <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5M8 10H6a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1h-2"/></svg>
-            <span class="hint">(bottom of the screen in Safari, top right in Chrome)</span></li>
+            <span class="hint" id="share-where">(bottom of the screen in Safari, top right in Chrome)</span></li>
           <li>Choose <strong>Add to Home Screen</strong></li>
           <li>Open <strong>Health Log</strong> from your Home Screen</li>
         </ol>
@@ -43,8 +43,10 @@
         <button id="install-skip" class="link-btn small-link">Continue in browser instead</button>
       </div>
       <div id="picker">
+        <!-- Filled by app.js for the device: open-in-browser advice, or an optional install card. -->
+        <div id="install-note" class="card install-note" hidden></div>
         <h2>What do you want to keep track of?</h2>
-        <p class="hint">Whatever you choose becomes a button you tap when it happens. After you log, you can
+        <p class="hint">Whatever you add becomes a button you tap when it happens. After you log, you can
           note anything that might be connected, like stress or poor sleep, and Patterns shows what comes up most.</p>
         <div id="ob-items" class="chips"></div>
         <form id="ob-add" class="add-row">
