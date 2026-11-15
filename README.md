@@ -25,7 +25,7 @@ The app has two ideas:
 - **History:** every entry, newest first. Tap a row to open and edit it (the pencil does the same); the trash deletes it right there, with Undo.
 - **Patterns:**
   - Days this month and last month, and bar charts of days (not taps) by week, month or year.
-  - **What tends to come before it?** compares what you track against each other. It sits near the top once two things have data.
+  - **What tends to come before it?** compares what you track against each other. It sits near the top once there's enough data to mean something.
   - Episodes for anything that lasts several days, with dates listed for multi-day episodes.
   - The most common details for each thing you track.
 - **Settings:**
