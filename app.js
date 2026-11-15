@@ -280,8 +280,8 @@ function renderTagRow() {
       save();
     })),
     firstTime ? detailInput(onAdd)[0] : addDetailChip(onAdd),
-    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Note what else was going on — anything that might be ' +
-      'connected, like stress or poor sleep. Patterns shows which ones come up most.'));
+    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything you think might be connected — stress, ' +
+      'poor sleep, a late meal. Patterns shows which ones come up most.'));
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; againAsk = null; renderTagRow(); renderGapAsk(); renderAgainAsk(); };
 
@@ -958,12 +958,13 @@ function onboard() {
   const names = [...SUGGESTED_ITEMS];
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
+  const pickState = () => { $('#ob-start').disabled = !picked.size; };
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
       on ? picked.add(n) : picked.delete(n);
-      $('#ob-start').disabled = !picked.size;
+      pickState();
     })));
-    $('#ob-start').disabled = !picked.size;
+    pickState();
   };
   renderItems();
   $('#ob-add').addEventListener('submit', ev => {
