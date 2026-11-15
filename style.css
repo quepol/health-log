@@ -76,6 +76,10 @@ h3 { font-size: 1.05rem; margin: 0 0 .5rem; }
   background: var(--bg);
   border-bottom: 1px solid var(--border);
 }
+/* Home Screen app on iPhone: iOS blurs a strip under the status bar that reaches a little past the
+   safe area, softening the title. A little extra room keeps the title and toggle clear of it. */
+html.standalone .top { padding-top: calc(env(safe-area-inset-top) + 1.25rem); }
+@media (display-mode: standalone) { .top { padding-top: calc(env(safe-area-inset-top) + 1.25rem); } }
 main {
   max-width: 45rem; margin: 0 auto;
   /* Side margins stay 16px (the iOS standard) rather than growing with text, which only steals width. */
