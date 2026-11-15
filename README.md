@@ -90,7 +90,7 @@ https://<username>.github.io/health-log/?track=Heartburn,Late+meal
 - **Text size:** follows the phone's setting. On iPhone that's **Settings → Display & Brightness → Text Size** (and **Accessibility → Larger Text**).
 - **Layout:** Log buttons stay two across, and Settings rows stay on one line, until a name genuinely doesn't fit. Then they reflow rather than clip or scroll sideways.
 - **Fixed sizes:** chart axis labels and the bottom tab bar cap their size so they always fit.
-- **Theme:** light and dark mode follow the system.
+- **Theme:** follows the system by default. The switch at the top right (sun, moon, screen) forces light or dark, or goes back to matching the system; the choice is remembered on that device.
 
 ## Privacy & security
 
@@ -170,6 +170,7 @@ To try it on a phone over Wi-Fi, open `http://<your-computer's-LAN-IP>:8000`. In
 | --- | --- |
 | `index.html` | Markup for setup, the four screens and the edit sheet |
 | `style.css` | Styles. Light/dark via `prefers-color-scheme`; sizes in `rem` so text follows the system setting |
+| `theme.js` | Applies a saved light/dark choice before the page draws, so it never flashes the other theme |
 | `app.js` | Storage, rendering, episodes, patterns, layout fitting and CSV (one file, about 1,000 lines) |
 | `sw.js` | Offline cache |
 | `manifest.webmanifest`, `*.png` | Install metadata and icons |
