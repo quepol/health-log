@@ -409,35 +409,55 @@ const EYE = 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3
 const EYE_OFF = 'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3 3.6M6.6 6.6C3.8 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6';
 const TRASH = 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6m5 5v6m4-6v6';
 
-/* ---------- Appearance: light / dark / match the system ----------
- * theme.js applies a saved choice before the page draws; this builds the switch and keeps the
- * browser's theme-color in step. The choice is per device, so it lives in localStorage. */
+/* ---------- Theme: Auto (follow the phone), Dark or Light ----------
+ * Auto is the default. The header has a one-tap toggle to the other theme; Settings → Theme
+ * offers all three, including going back to Auto. theme.js applies a saved choice before the
+ * page draws. The choice is per device, so it lives in localStorage. */
 const THEME_KEY = 'healthlog.theme';
 const SUN = 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4';
 const MOON = 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z';
-const SCREEN = 'M4 4h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1ZM8 20h8M12 16v4';
 const themeMetas = [...document.querySelectorAll('meta[name="theme-color"]')].map(m => [m, m.content]);
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
 
-function currentTheme() {
+// Half-filled circle for Auto: stroke icons can't fill, so this one is built by hand.
+function autoIcon() {
+  const span = h('span');
+  span.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3a9 9 0 0 0 0 18Z" fill="currentColor"/></svg>';
+  return span.firstChild;
+}
+
+function themeChoice() {
   const t = document.documentElement.dataset.theme;
-  return t === 'light' || t === 'dark' ? t : 'system';
+  return t === 'light' || t === 'dark' ? t : 'auto';
 }
+const effectiveTheme = () => themeChoice() === 'auto' ? (systemDark.matches ? 'dark' : 'light') : themeChoice();
+
 function setTheme(t) {
-  if (t === 'system') delete document.documentElement.dataset.theme;
+  if (t === 'auto') delete document.documentElement.dataset.theme;
   else document.documentElement.dataset.theme = t;
-  try { t === 'system' ? localStorage.removeItem(THEME_KEY) : localStorage.setItem(THEME_KEY, t); } catch { /* per-device nicety only */ }
-  // Forced themes paint the browser chrome to match; "system" restores the media-based pair.
+  try { t === 'auto' ? localStorage.removeItem(THEME_KEY) : localStorage.setItem(THEME_KEY, t); } catch { /* per-device nicety only */ }
+  // A chosen theme paints the browser chrome to match; Auto restores the media-based pair.
   for (const [m, original] of themeMetas) m.content = t === 'light' ? '#f8fafc' : t === 'dark' ? '#0b1120' : original;
-  renderThemeSwitch();
+  renderTheme();
 }
-function renderThemeSwitch() {
-  const now = currentTheme();
-  $('#theme-switch').replaceChildren(...[['light', SUN, 'Light'], ['dark', MOON, 'Dark'], ['system', SCREEN, 'Match system']]
-    .map(([t, path, label]) => h('button', {
-      role: 'radio', 'aria-checked': String(t === now), 'aria-label': label, title: label,
-      onclick: () => setTheme(t),
-    }, svgIcon(path))));
+
+function renderTheme() {
+  // Header: the icon shows where a tap takes you (a moon in light mode, a sun in dark).
+  const toDark = effectiveTheme() === 'light';
+  const label = toDark ? 'Switch to dark theme' : 'Switch to light theme';
+  const btn = $('#theme-toggle');
+  btn.replaceChildren(svgIcon(toDark ? MOON : SUN));
+  btn.setAttribute('aria-label', label);
+  btn.title = label;
+  btn.onclick = () => setTheme(toDark ? 'dark' : 'light');
+  // Settings: Auto · Dark · Light, the current one bold and the others links.
+  const now = themeChoice();
+  $('#theme-options').replaceChildren(...[['auto', 'Auto'], ['dark', 'Dark'], ['light', 'Light']].map(([t, label]) =>
+    h('button', { class: 'theme-option', role: 'radio', 'aria-checked': String(t === now), onclick: () => setTheme(t) },
+      t === 'auto' ? autoIcon() : svgIcon(t === 'dark' ? MOON : SUN), h('span', {}, label))));
 }
+// On Auto, follow the phone switching between light and dark while the app is open.
+systemDark.addEventListener?.('change', () => renderTheme());
 
 function renderHistory() {
   const out = $('#history');
@@ -1093,7 +1113,7 @@ $('#wipe-yes').addEventListener('click', () => {
 });
 
 renderAll();
-setTheme(currentTheme()); // builds the switch and syncs theme-color with any saved choice
+setTheme(themeChoice()); // builds the toggle and options, and syncs theme-color with any saved choice
 if (isNewDevice) onboard();
 
 // Ask the browser not to evict our data; report the result in Settings.

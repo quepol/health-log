@@ -338,18 +338,27 @@ dialog legend { padding: 0; margin-bottom: .3rem; }
 .app-footer .link-btn { margin: 0; min-height: 0; position: relative; color: var(--muted); font-weight: 400; text-decoration: underline; }
 .app-footer .link-btn::after { content: ''; position: absolute; inset: -.75rem -.5rem; } /* big tap area, normal line spacing */
 
-/* Light / dark / system switch in the header */
-.theme-switch { margin-left: auto; display: flex; flex: none; gap: 2px; padding: 3px; border: 1px solid var(--border); border-radius: 999px; }
-.theme-switch button {
-  position: relative; min-width: 0; min-height: 0; width: 2.75rem; height: 2.1rem; padding: 0;
+/* Header: one round toggle between light and dark */
+.theme-toggle {
+  position: relative; margin-left: auto; flex: none; padding: 0;
+  width: 2.4rem; height: 2.4rem; min-width: 0; min-height: 0;
   display: flex; align-items: center; justify-content: center;
-  border: 0; border-radius: 999px; background: none; color: var(--muted);
+  border-radius: 50%; color: var(--muted); background: var(--surface);
 }
-.theme-switch button::after { content: ''; position: absolute; inset: -.3rem 0; } /* taller tap area */
-.theme-switch button[aria-checked="true"] { background: var(--surface-2); color: var(--text); }
-.theme-switch svg { width: 1.1rem; height: 1.1rem; }
+.theme-toggle::after { content: ''; position: absolute; inset: -.2rem; border-radius: 50%; } /* 44px tap area */
+.theme-toggle svg, .theme-option svg { width: 1.15rem; height: 1.15rem; fill: none; stroke: currentColor; }
 /* Capped like the tab bar, so it never crowds the title at large text sizes. */
 @supports (width: min(1px, 2px)) {
-  .theme-switch button { width: min(2.75rem, 44px); height: min(2.1rem, 34px); }
-  .theme-switch svg { width: min(1.1rem, 20px); height: min(1.1rem, 20px); }
+  .theme-toggle { width: min(2.4rem, 40px); height: min(2.4rem, 40px); }
+  .theme-toggle svg { width: min(1.15rem, 20px); height: min(1.15rem, 20px); }
 }
+
+/* Settings → Theme: Auto · Dark · Light, the current one bold, the others links */
+.theme-options { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
+.theme-option {
+  display: inline-flex; align-items: center; gap: .4rem; min-height: 2.75rem; padding: 0;
+  border: 0; background: none; color: var(--muted);
+}
+.theme-option span { text-decoration: underline; text-underline-offset: 3px; }
+.theme-option[aria-checked="true"] { color: var(--text); font-weight: 700; }
+.theme-option[aria-checked="true"] span { text-decoration: none; }
