@@ -40,14 +40,17 @@
       </div>
       <div id="picker">
         <h2>What do you want to keep track of?</h2>
-        <p class="hint">Symptoms, exercise, anything you want to keep an eye on. Each one becomes a button
-          you tap when it happens. After you log, you can note details like stress or poor sleep.</p>
+        <p class="hint">Whatever you choose becomes a button you tap when it happens. After you log, you can
+          note anything that might be connected, like stress or poor sleep, and Patterns shows what comes up most.</p>
         <div id="ob-items" class="chips"></div>
         <form id="ob-add" class="add-row">
           <input name="name" placeholder="Add your own" autocomplete="off">
           <button class="secondary">Add</button>
         </form>
-        <button id="ob-start" class="primary ob-start">Start logging</button>
+        <div class="ob-footer">
+          <p class="hint" id="ob-pick-hint">Pick at least one to start.</p>
+          <button id="ob-start" class="primary ob-start">Start logging</button>
+        </div>
         <button id="ob-import" class="link-btn">Moving from another phone?<br>Import a backup file</button>
       </div>
     </section>
