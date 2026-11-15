@@ -274,14 +274,15 @@ function renderTagRow() {
   };
   // Their very first log: open the text box (no tap on "+ Add" needed) and explain details once.
   const firstTime = db.entries.length === 1;
-  $('#tagrow-chips').replaceChildren(
+  $('#tagrow-chips').replaceChildren(...[
     ...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
       e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
       save();
     })),
     firstTime ? detailInput(onAdd)[0] : addDetailChip(onAdd),
     firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything you think might be connected — stress, ' +
-      'poor sleep, a late meal. Patterns shows which ones come up most.'));
+      'poor sleep, a late meal. Patterns shows which ones come up most.'),
+  ].filter(Boolean));
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; againAsk = null; renderTagRow(); renderGapAsk(); renderAgainAsk(); };
 
