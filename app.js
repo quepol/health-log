@@ -958,10 +958,7 @@ function onboard() {
   const names = [...SUGGESTED_ITEMS];
   for (const p of pre) if (!names.some(n => sameName(n, p))) names.push(p);
   const picked = new Set(names.filter(n => pre.some(p => sameName(n, p))));
-  const pickState = () => {
-    $('#ob-start').disabled = !picked.size;
-    $('#ob-pick-hint').hidden = !!picked.size;
-  };
+  const pickState = () => { $('#ob-start').disabled = !picked.size; };
   const renderItems = () => {
     $('#ob-items').replaceChildren(...names.map(n => chip(n, picked.has(n), on => {
       on ? picked.add(n) : picked.delete(n);

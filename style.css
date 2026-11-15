@@ -106,7 +106,6 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
   position: sticky; bottom: calc(env(safe-area-inset-bottom) + .75rem); z-index: 2;
   margin-top: 1.5rem; background: var(--bg); box-shadow: 0 0 0 6px var(--bg);
 }
-#ob-pick-hint { margin: 0 0 .4rem; text-align: center; }
 .ob-start { width: 100%; min-height: 3.5rem; font-size: 1.1rem; }
 /* Sticky over text, so the usual translucent disabled look won't do: solid grey instead. */
 .ob-start:disabled { opacity: 1; background: var(--surface-2); border-color: var(--surface-2); color: var(--muted); }
