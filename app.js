@@ -403,6 +403,10 @@ function svgIcon(path) {
   return span.firstChild;
 }
 const PENCIL = 'M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z';
+const UP = 'M12 19V5M5 12l7-7 7 7';
+const DOWN = 'M12 5v14M5 12l7 7 7-7';
+const EYE = 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z';
+const EYE_OFF = 'M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.9 5.1A10 10 0 0 1 12 5c6 0 10 7 10 7a17 17 0 0 1-3 3.6M6.6 6.6C3.8 8.3 2 12 2 12s4 7 10 7a9.7 9.7 0 0 0 5.4-1.6';
 const TRASH = 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6m5 5v6m4-6v6';
 
 function renderHistory() {
@@ -657,25 +661,29 @@ let deleting = null; // id of the hidden row whose delete confirmation is open
 let merging = null;  // { id, into }: a row renamed to another one's name, awaiting "Merge?"
 
 function renderList(list, el) {
-  el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
-    h('input', {
-      value: x.name, 'aria-label': 'Name',
-      onchange: ev => {
-        const v = cleanName(ev.target.value);
-        const into = v && list.find(o => o !== x && o.name.toLowerCase() === v.toLowerCase());
-        if (into) { merging = { id: x.id, into: into.id }; deleting = null; return renderSettings(); }
-        if (v) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
-      },
-    }),
-    // Kept together so that, when the row is too narrow, they wrap as one group under the name.
-    // Hidden rows swap the arrows for Delete: hiding first is the step that keeps deleting deliberate.
-    h('div', { class: 'row-actions' },
-      !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} up`, disabled: i === 0, onclick: () => move(list, i, -1) }, '↑'),
-      !x.archived && h('button', { class: 'icon-btn', 'aria-label': `Move ${x.name} down`, disabled: i === list.length - 1, onclick: () => move(list, i, 1) }, '↓'),
-      // Hidden items leave the Log screen / details row; their history stays.
-      h('button', { class: 'small hide-btn', 'aria-label': `${x.archived ? 'Show' : 'Hide'} ${x.name}`, onclick: () => { x.archived = !x.archived; deleting = merging = null; save(); renderAll(); } },
-        x.archived ? 'Show' : 'Hide'),
-      x.archived && h('button', { class: 'small danger', 'aria-label': `Delete ${x.name}`, onclick: () => askDelete(list, x) }, 'Delete')),
+  // One container per row, like History: the name is edited in place, small icons sit at the right.
+  // Hidden rows swap the arrows for Delete: hiding first is the step that keeps deleting deliberate.
+  const icon = (path, label, onclick, extra = {}) =>
+    h('button', { class: 'icon-btn row-icon', 'aria-label': label, title: label, onclick, ...extra }, svgIcon(path));
+  el.replaceChildren(...list.map((x, i) => h('div', { class: 'list-item' },
+    h('div', { class: 'list-row' + (x.archived ? ' archived' : '') },
+      h('input', {
+        value: x.name, 'aria-label': 'Name',
+        onchange: ev => {
+          const v = cleanName(ev.target.value);
+          const into = v && list.find(o => o !== x && o.name.toLowerCase() === v.toLowerCase());
+          if (into) { merging = { id: x.id, into: into.id }; deleting = null; return renderSettings(); }
+          if (v) { x.name = v; save(); renderAll(); } else ev.target.value = x.name;
+        },
+      }),
+      // Kept together so that, when the row is too narrow, they wrap as one group under the name.
+      h('div', { class: 'row-actions' },
+        !x.archived && icon(UP, `Move ${x.name} up`, () => move(list, i, -1), { disabled: i === 0 }),
+        !x.archived && icon(DOWN, `Move ${x.name} down`, () => move(list, i, 1), { disabled: i === list.length - 1 }),
+        // Hidden items leave the Log screen / details row; their history stays.
+        icon(x.archived ? EYE : EYE_OFF, `${x.archived ? 'Show' : 'Hide'} ${x.name}`,
+          () => { x.archived = !x.archived; deleting = merging = null; save(); renderAll(); }),
+        x.archived && icon(TRASH, `Delete ${x.name}`, () => askDelete(list, x), { class: 'icon-btn row-icon row-del' }))),
     deleting === x.id && deleteConfirm(list, x),
     merging?.id === x.id && mergeConfirm(list, x, list.find(o => o.id === merging.into)))));
 }

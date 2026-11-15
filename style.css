@@ -255,14 +255,23 @@ h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 .controls { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .5rem; }
 
 /* Settings */
-.list-row { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; margin-bottom: .4rem; }
-.list-row input { flex: 1 1 5rem; min-width: 0; }
-/* Large text: the three buttons wrap together, right-aligned under the name. */
-.row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .4rem; margin-left: auto; }
-.list.stacked .list-row input { flex-basis: 100%; }
-/* Narrow but tall: rarely used, so they give width back to the name. Full height keeps them easy to hit. */
-.row-actions .icon-btn { min-width: 0; width: max(34px, 1.9rem); font-size: 1.1rem; }
-.hide-btn { min-width: 4.2rem; } /* same width for Hide and Show */
+/* Like History rows: one container per row, small icons inside at the right edge. */
+.list-item { margin-bottom: .4rem; }
+.list-row {
+  display: flex; flex-wrap: wrap; align-items: center;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+}
+.list-row input {
+  flex: 1 1 5rem; min-width: 0; min-height: min(2.75rem, 48px); padding: .45rem 0 .45rem .75rem;
+  border: 0; background: none; border-radius: 12px 0 0 12px;
+}
+/* Large text: the icons wrap together, right-aligned under the name. */
+.row-actions { display: flex; justify-content: flex-end; margin-left: auto; align-self: stretch; }
+/* Icons don't need to grow with text: cap the tap area at 48px (still above the 44px minimum). */
+.row-actions .row-icon { min-width: min(2.6rem, 48px); min-height: min(2.75rem, 48px); }
+.row-actions .row-icon svg { width: min(1rem, 20px); height: min(1rem, 20px); }
+.list.stacked .list-row input { flex-basis: 100%; border-radius: 12px 12px 0 0; }
+.list.stacked .row-actions .row-icon:last-child { border-radius: 0 0 12px 0; }
 .list-row.archived input { color: var(--muted); text-decoration: line-through; }
 input, select, textarea {
   font-size: max(1rem, 16px); /* below 16px, iOS zooms the page on focus */
