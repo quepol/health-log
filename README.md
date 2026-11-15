@@ -22,7 +22,7 @@ The app has two ideas:
   - Tapping the same button again within 10 minutes asks first ("Headache again? You logged it 2 minutes ago."), since a quick second tap is usually a slip.
   - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
   - **＋ Add new** adds a button. **+ Add past entry** backdates one.
-- **History:** every entry, newest first. Tap one to change or delete it.
+- **History:** every entry, newest first. Tap a row to open and edit it (the pencil does the same); the trash deletes it right there, with Undo.
 - **Patterns:**
   - Days this month and last month, and bar charts of days (not taps) by week, month or year.
   - Episodes for anything that lasts several days.

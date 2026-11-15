@@ -396,6 +396,15 @@ $('#f-delete').addEventListener('click', () => {
 /* ---------- History view ---------- */
 let historyLimit = 200;
 
+// Inline icons (stroke follows the button's colour).
+function svgIcon(path) {
+  const span = h('span');
+  span.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+  return span.firstChild;
+}
+const PENCIL = 'M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z';
+const TRASH = 'M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6m5 5v6m4-6v6';
+
 function renderHistory() {
   const out = $('#history');
   const sorted = [...db.entries].sort(byNewest);
@@ -408,10 +417,19 @@ function renderHistory() {
       nodes.push(h('div', { class: 'day-head' }, fmtDay(day, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })));
     }
     const tags = e.tagIds.map(id => tagById(id)?.name).filter(Boolean).join(', ');
-    nodes.push(h('button', { class: 'entry', onclick: () => openEdit(e.id) },
-      h('span', { class: 'time' }, eTime(e)),
-      h('span', { class: 'name' }, itemById(e.itemId)?.name ?? '(deleted item)'),
-      (tags || e.note) && h('span', { class: 'meta' }, [tags, e.note].filter(Boolean).join(' · '))));
+    const name = itemById(e.itemId)?.name ?? '(deleted item)';
+    const what = `${name} · ${fmtWhen(e, true)}`;
+    // The whole row opens the sheet; the pencil just signals that it can be edited.
+    nodes.push(h('div', { class: 'entry-row' },
+      h('button', { class: 'entry', onclick: () => openEdit(e.id) },
+        h('span', { class: 'time' }, eTime(e)),
+        h('span', { class: 'name' }, name),
+        (tags || e.note) && h('span', { class: 'meta' }, [tags, e.note].filter(Boolean).join(' · '))),
+      h('button', { class: 'icon-btn row-icon', 'aria-label': `Edit ${what}`, onclick: () => openEdit(e.id) }, svgIcon(PENCIL)),
+      h('button', { class: 'icon-btn row-icon row-del', 'aria-label': `Delete ${what}`, onclick: () => {
+        removeEntry(e.id);
+        toast(`Deleted ${what}`, [['Undo', () => { db.entries.push(e); save(); renderAll(); }]]);
+      } }, svgIcon(TRASH))));
   }
   if (sorted.length > historyLimit) {
     nodes.push(h('button', { class: 'secondary', onclick: () => { historyLimit += 200; renderHistory(); } },
