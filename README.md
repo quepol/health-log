@@ -35,6 +35,7 @@ The app has two ideas:
   - **Delete**: on hidden rows only.
   - **Backup**: Export to a file, or Import from a file (it shows what's new before adding anything).
   - **Storage**: how many entries are on this phone, and Delete all data.
+  - **Theme**: Auto (follow the phone), Dark or Light.
   - At the bottom: the app's version and **Check for updates**.
 
 ### Episodes
@@ -90,7 +91,7 @@ https://<username>.github.io/health-log/?track=Heartburn,Late+meal
 - **Text size:** follows the phone's setting. On iPhone that's **Settings → Display & Brightness → Text Size** (and **Accessibility → Larger Text**).
 - **Layout:** Log buttons stay two across, and Settings rows stay on one line, until a name genuinely doesn't fit. Then they reflow rather than clip or scroll sideways.
 - **Fixed sizes:** chart axis labels and the bottom tab bar cap their size so they always fit.
-- **Theme:** follows the system by default. The switch at the top right (sun, moon, screen) forces light or dark, or goes back to matching the system; the choice is remembered on that device.
+- **Theme:** follows the phone's setting by default (Auto). The round button at the top right switches between light and dark in one tap; **Settings → Theme** offers Auto, Dark and Light. The choice is remembered on that device.
 
 ## Privacy & security
 
