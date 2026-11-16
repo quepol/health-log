@@ -731,9 +731,9 @@ function verdictOf(n, hit, chance) {
 const WINDOW_LABELS = [[0, 'The same day only'], [1, 'The same day or the day before'], [2, 'Same day or up to 2 days before'],
   [3, 'Same day or up to 3 days before'], [5, 'Same day or up to 5 days before']];
 const windowTail = w => w === 0 ? 'the same day' : w === 1 ? 'the same day or the day before' : `the same day or up to ${w} days before`;
-const expectedNum = x => x < 10 ? String(Math.round(x * 10) / 10) : String(Math.round(x));
-const expectedText = x => x < 0.05 ? 'Almost none would be expected by chance.' : `About ${expectedNum(x)} would be expected by chance.`;
-const expectedShort = x => x < 0.05 ? 'almost none expected by chance' : `about ${expectedNum(x)} expected by chance`;
+// How common something is on an ordinary day, as a plain percentage (rounded, since it's an estimate).
+const dayPct = p => p < 0.01 ? 'under 1%' : p >= 0.99 ? 'nearly every day' : `about ${p >= 0.1 ? Math.round(p * 20) * 5 : Math.round(p * 100)}%`;
+const ordinaryDays = p => p >= 0.99 ? 'That\u2019s true on nearly every day overall.' : `That\u2019s true on ${dayPct(p)} of days overall.`;
 
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
@@ -765,16 +765,17 @@ function precedeCard(items) {
     for (let n = from; n <= t; n++) if (exposed(n)) covered++;
     const p = covered / (t - from + 1), n = episodes.length;
     const chance = n ? tailChance(hit, n, p) : 1;
-    return { it, from, n, hit, p, expected: p * n, chance, verdict: verdictOf(n, hit, chance) };
+    return { it, from, n, hit, p, chance, verdict: verdictOf(n, hit, chance) };
   }).sort((a, b) => a.chance - b.chance || b.hit - a.hit);
 
+  const pctOf = r => Math.round(100 * r.hit / r.n);
   const sentence = r => r.n
-    ? `Since ${fmt(r.from)}, ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} had ${r.it.name} logged ${windowTail(w)}.`
+    ? `Since ${fmt(r.from)}, ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%) had ${r.it.name} logged ${windowTail(w)}.`
     : `Since ${fmt(r.from)} there haven’t been any ${sym.name} episodes to compare.`;
 
   // A short note to read out or paste to a doctor: the same facts, in one place.
   const lines = rows.filter(r => r.n).slice(0, 3).map(r =>
-    `Since ${fmt(r.from)}: ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} had ${r.it.name} logged ${windowTail(w)} (${expectedShort(r.expected)}).`);
+    `Since ${fmt(r.from)}: ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%) had ${r.it.name} logged ${windowTail(w)}. ${ordinaryDays(r.p)}`);
   const anySmall = rows.some(r => r.n && r.n < 5);
   const summary = lines.length ? [`${sym.name} and what came before it (from Health Log):`, ...lines,
     anySmall ? 'That is too few episodes to be sure. A link would not prove a cause.' : 'A link would not prove a cause.'].join('\n') : '';
@@ -795,16 +796,17 @@ function precedeCard(items) {
     h('label', { class: 'field-label' }, 'Count a thing if it was logged',
       h('select', { onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
         WINDOW_LABELS.map(([v, l]) => h('option', { value: v, selected: v === w }, l)))),
-    h('p', { class: 'hint' }, `Each thing is compared only over the days since you first logged it.`),
+    h('p', { class: 'hint' }, `A thing may be linked if it comes before your ${sym.name} episodes much more often than it shows up on ordinary days. Each thing is compared only over the days since you first logged it.`),
     rows.map(r => h('div', { class: 'precede-row' },
       h('div', { class: 'precede-head' }, h('strong', {}, r.it.name), h('span', { class: `verdict ${r.verdict[0]}` }, r.verdict[1])),
       h('p', { class: 'precede-text' }, sentence(r)),
-      r.n > 0 && h('p', { class: 'meta' }, expectedText(r.expected)))),
+      r.n > 0 && h('p', { class: 'meta' }, ordinaryDays(r.p)))),
+    h('p', { class: 'hint' }, 'A link is not a cause. It only works if you tap each thing every time it happens, not just on bad days.'),
+    summary && h('hr', { class: 'rule' }),
     summary && h('div', { class: 'doctor' },
       h('strong', {}, 'For your doctor'),
       h('p', { class: 'doctor-note' }, summary),
-      h('button', { class: 'secondary small', onclick: copy }, 'Copy summary')),
-    h('p', { class: 'hint' }, 'A link is not a cause. It only works if you tap each thing every time it happens, not just on bad days.'));
+      h('button', { class: 'secondary small', onclick: copy }, 'Copy summary')));
 }
 
 /* ---------- Settings view ---------- */
