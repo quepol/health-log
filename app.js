@@ -157,12 +157,22 @@ function renderLog() {
 
 // Two columns until a single word (e.g. "Heartburn" at the largest text sizes) can't fit
 // in a half-width button; then one column. Measured, so it adapts to names and text size.
+// Buttons sit side by side. One whose name has a word too long for a normal-width button takes a
+// full row; the rest keep their columns. A button a wide one would leave alone in its row stretches
+// to fill it, so there are no gaps and the order you chose never changes.
 function fitGrid() {
   const grid = $('#grid');
-  grid.classList.remove('one-col');
+  const tiles = [...grid.children];
+  for (const t of tiles) { t.classList.remove('wide'); t.style.gridColumn = ''; }
   if (grid.offsetParent === null) return; // hidden: measure next time it's shown
-  const tooNarrow = [...grid.querySelectorAll('.log-btn > span')].some(s => s.scrollWidth > s.clientWidth + 1);
-  grid.classList.toggle('one-col', tooNarrow);
+  const cols = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+  const wide = tiles.map(t => [...t.querySelectorAll(':scope > span')].some(sp => sp.scrollWidth > sp.clientWidth + 1));
+  tiles.forEach((t, i) => t.classList.toggle('wide', wide[i]));
+  let inRow = 0; // buttons so far in the current, unfinished row
+  tiles.forEach((t, i) => {
+    if (wide[i]) { if (inRow) tiles[i - 1].style.gridColumn = `span ${cols - inRow + 1}`; inRow = 0; }
+    else inRow = (inRow + 1) % cols;
+  });
 }
 addEventListener('resize', () => { fitGrid(); fitLists(); });
 

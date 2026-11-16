@@ -90,7 +90,7 @@ https://<username>.github.io/health-log/?track=Heartburn,Late+meal
 ## Accessibility and text size
 
 - **Text size:** follows the phone's setting. On iPhone that's **Settings → Display & Brightness → Text Size** (and **Accessibility → Larger Text**).
-- **Layout:** Log buttons stay two across, and Settings rows stay on one line, until a name genuinely doesn't fit. Then they reflow rather than clip or scroll sideways.
+- **Layout:** Log buttons stay two across, and Settings rows stay on one line, until a name genuinely doesn't fit. A button with a name too long for half the width takes a full row while the others stay two across; at the largest text sizes that means one per row. Nothing clips or scrolls sideways.
 - **Fixed sizes:** chart axis labels and the bottom tab bar cap their size so they always fit.
 - **Theme:** follows the phone's setting by default (Auto). The round button at the top right switches between light and dark in one tap; **Settings → Theme** offers Auto, Dark and Light. The choice is remembered on that device.
 
