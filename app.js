@@ -314,6 +314,9 @@ function renderTagRow() {
     ...active(db.tags).map(t => chip(t.name, e.tagIds.includes(t.id), on => {
       e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
       save();
+      // Only the other screens: re-rendering this row would swap the chips under the person's finger.
+      renderHistory();
+      renderPatterns();
     })),
     firstTime ? detailInput(onAdd, onNote)[0] : addDetailChip(onAdd, onNote),
     firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything that might be connected, in a couple of words: stress, ' +
