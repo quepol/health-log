@@ -283,10 +283,17 @@ h3 .meta, th .meta { font-weight: 400; color: var(--muted); }
 .privacy { padding-left: 1.2rem; margin: 0 0 .75rem; }
 .privacy li { margin-bottom: .4rem; }
 .hint a { color: var(--accent); font-weight: 600; }
-.precede-row { padding: .5rem 0; border-bottom: 1px solid var(--border); }
-.precede-row.strong .lift { color: var(--accent); font-weight: 700; }
-.precede-row .meta { font-size: .85rem; color: var(--muted); }
-.controls { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; margin-bottom: .5rem; }
+.field-label { display: block; margin-bottom: .6rem; font-size: .85rem; font-weight: 600; color: var(--muted); }
+.field-label select { margin-top: .25rem; font-weight: 400; color: var(--text); }
+.precede-row { padding: .75rem 0; border-top: 1px solid var(--border); }
+.precede-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .25rem .75rem; }
+.precede-text { margin: .35rem 0 0; }
+.precede-row .meta { margin: .2rem 0 0; font-size: .85rem; color: var(--muted); }
+.verdict { padding: .15rem .6rem; border-radius: 999px; font-size: .8rem; font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--muted); }
+.verdict.linked { background: var(--chip-on); color: var(--accent-text); }
+.verdict.maybe { background: none; box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent); }
+.doctor { margin: .5rem 0 1rem; padding: .75rem; border: 1px solid var(--border); border-radius: 12px; }
+.doctor-note { margin: .4rem 0 .6rem; font-size: .9rem; white-space: pre-wrap; user-select: text; -webkit-user-select: text; }
 
 /* Settings */
 /* Like History rows: one container per row, small icons inside at the right edge. */

@@ -552,14 +552,9 @@ function renderPatterns() {
     return out.replaceChildren(...[h('p', { class: 'empty' }, 'Log a few entries and patterns will show up here.'), note].filter(Boolean));
   }
   const byItem = new Map(items.map(it => [it.id, db.entries.filter(e => e.itemId === it.id)]));
-  // The comparison is the payoff, so it sits right under the summary once it has something
-  // worth saying: two things with data, and something with 5+ episodes (the same threshold as
-  // its "Too few to read much into yet" line). Until then it stays at the bottom.
-  const compare = precedeCard(items);
-  const promote = items.filter(it => byItem.get(it.id).length).length >= 2
-    && items.some(it => episodesOf(it).length >= 5);
-  out.replaceChildren(...[note, monthSummary(items, byItem), promote && compare, scaleSwitch(),
-    ...items.map(it => itemCard(it, byItem.get(it.id))), !promote && compare].filter(Boolean));
+  // The per-thing charts come first: they're what most people look for. The comparison is last.
+  out.replaceChildren(...[note, monthSummary(items, byItem), scaleSwitch(),
+    ...items.map(it => itemCard(it, byItem.get(it.id))), precedeCard(items)].filter(Boolean));
 }
 
 function monthSummary(items, byItem) {
@@ -693,6 +688,32 @@ function episodeSection(it) {
 /* "What comes before it?": for each other item, how often it was logged in the window before
  * a symptom episode started, compared with how often it was logged before any day at all.
  * Only each episode's first day counts: what happened on day 5 of a flare isn't a trigger. */
+// Chance that at least k of n episodes would land on a "covered" day if the thing were unrelated,
+// when a random day is covered with probability p (the upper tail of a binomial).
+const logFact = [0]; for (let i = 1; i <= 400; i++) logFact[i] = logFact[i - 1] + Math.log(i);
+function tailChance(k, n, p) {
+  if (k <= 0 || p >= 1) return 1;
+  if (p <= 0) return 0;
+  let sum = 0;
+  for (let i = k; i <= n; i++) sum += Math.exp(logFact[n] - logFact[i] - logFact[n - i] + i * Math.log(p) + (n - i) * Math.log(1 - p));
+  return Math.min(1, sum);
+}
+
+// A plain verdict, honest about small numbers: under 5 episodes nothing is called either way.
+function verdictOf(n, hit, chance) {
+  if (n < 5) return ['soon', 'Too soon to tell'];
+  if (hit >= 3 && chance < 0.05) return ['linked', 'Looks linked'];
+  if (hit >= 2 && chance < 0.15) return ['maybe', 'Might be linked'];
+  return ['none', 'No clear link'];
+}
+
+const WINDOW_LABELS = [[0, 'The same day only'], [1, 'The same day or the day before'], [2, 'Same day or up to 2 days before'],
+  [3, 'Same day or up to 3 days before'], [5, 'Same day or up to 5 days before']];
+const windowTail = w => w === 0 ? 'the same day' : w === 1 ? 'the same day or the day before' : `the same day or up to ${w} days before`;
+const expectedNum = x => x < 10 ? String(Math.round(x * 10) / 10) : String(Math.round(x));
+const expectedText = x => x < 0.05 ? 'Almost none would be expected by chance.' : `About ${expectedNum(x)} would be expected by chance.`;
+const expectedShort = x => x < 0.05 ? 'almost none expected by chance' : `about ${expectedNum(x)} expected by chance`;
+
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
   if (withData.length < 2) {
@@ -702,42 +723,67 @@ function precedeCard(items) {
   if (!withData.some(it => it.id === precede.symptomId)) precede.symptomId = withData[0].id;
 
   const t = today();
-  const firstDay = Math.min(...db.entries.map(e => dayNum(eDay(e))));
-  const start = Math.max(firstDay, t - 364);
-  const total = t - start + 1;
   const daysOf = id => new Set(db.entries.filter(e => e.itemId === id).map(e => dayNum(eDay(e))));
   const sym = itemById(precede.symptomId);
-  const symptomDays = episodesOf(sym).map(ep => ep.start).filter(n => n >= start && n <= t);
+  const symEpisodes = episodesOf(sym).map(ep => ep.start);
+  const symFirst = Math.min(...daysOf(sym.id));
+  const w = precede.window;
+  const thisYear = todayKey().slice(0, 4);
+  const fmt = n => { const k = numDay(n); return fmtDay(k, { month: 'short', day: 'numeric', ...(k.startsWith(thisYear) ? {} : { year: 'numeric' }) }); };
 
+  // Each thing is judged only over the days since it was first logged (and the symptom was being
+  // logged): before that, nobody knows whether it was there, and counting those days as "without it"
+  // makes a newly tracked thing look far more telling than it is.
   const rows = withData.filter(it => it.id !== sym.id).map(it => {
     const ex = daysOf(it.id);
-    const exposed = n => { for (let k = 0; k <= precede.window; k++) if (ex.has(n - k)) return true; return false; };
-    const hit = symptomDays.filter(exposed).length;
-    let base = 0;
-    for (let n = start; n <= t; n++) if (exposed(n)) base++;
-    const pS = symptomDays.length ? hit / symptomDays.length : 0, pB = base / total;
-    return { it, hit, pS, pB, lift: pB ? pS / pB : 0 };
-  }).sort((a, b) => b.lift - a.lift);
+    const from = Math.max(symFirst, Math.min(...ex), t - 364);
+    const exposed = n => { for (let k = 0; k <= w; k++) if (ex.has(n - k)) return true; return false; };
+    const episodes = symEpisodes.filter(n => n >= from && n <= t);
+    const hit = episodes.filter(exposed).length;
+    let covered = 0;
+    for (let n = from; n <= t; n++) if (exposed(n)) covered++;
+    const p = covered / (t - from + 1), n = episodes.length;
+    const chance = n ? tailChance(hit, n, p) : 1;
+    return { it, from, n, hit, p, expected: p * n, chance, verdict: verdictOf(n, hit, chance) };
+  }).sort((a, b) => a.chance - b.chance || b.hit - a.hit);
 
-  const unit = `${sym.name} episode`;
-  const pct = x => `${Math.round(x * 100)}%`;
-  const enough = symptomDays.length >= 5;
+  const sentence = r => r.n
+    ? `Since ${fmt(r.from)}, ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} had ${r.it.name} logged ${windowTail(w)}.`
+    : `Since ${fmt(r.from)} there haven’t been any ${sym.name} episodes to compare.`;
+
+  // A short note to read out or paste to a doctor: the same facts, in one place.
+  const lines = rows.filter(r => r.n).slice(0, 3).map(r =>
+    `Since ${fmt(r.from)}: ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} had ${r.it.name} logged ${windowTail(w)} (${expectedShort(r.expected)}).`);
+  const anySmall = rows.some(r => r.n && r.n < 5);
+  const summary = lines.length ? [`${sym.name} and what came before it (from Health Log):`, ...lines,
+    anySmall ? 'That is too few episodes to be sure. A link would not prove a cause.' : 'A link would not prove a cause.'].join('\n') : '';
+
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(summary); toast('Copied'); }
+    catch {
+      if (navigator.share) { try { await navigator.share({ text: summary }); } catch { /* cancelled */ } }
+      else toast('Couldn’t copy. Select the text and copy it instead.');
+    }
+  };
 
   return h('div', { class: 'card' },
     h('h3', {}, 'What tends to come before it?'),
-    h('div', { class: 'controls' },
-      h('select', { 'aria-label': 'Compare against', onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
-        withData.map(it => h('option', { value: it.id, selected: it.id === sym.id }, it.name))),
-      h('select', { 'aria-label': 'Window', onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
-        [[0, 'Same day'], [1, 'Within 1 day'], [2, 'Within 2 days'], [3, 'Within 3 days'], [5, 'Within 5 days']]
-          .map(([v, l]) => h('option', { value: v, selected: v === precede.window }, l)))),
-    h('p', { class: 'hint' }, `Based on ${plural(symptomDays.length, unit)} in the last ${plural(total, 'day')}.` +
-      (enough ? '' : ' Too few to read much into yet.')),
-    rows.map(r => h('div', { class: 'precede-row' + (enough && r.hit >= 3 && r.lift >= 1.5 ? ' strong' : '') },
-      h('div', {}, h('strong', {}, r.it.name), ' ', h('span', { class: 'lift' }, r.pB ? `${r.lift.toFixed(1)}×` : '–')),
-      h('div', { class: 'meta' }, `Before ${r.hit} of ${plural(symptomDays.length, 'episode')} (${pct(r.pS)}), vs ${pct(r.pB)} of days overall`))),
-    h('p', { class: 'hint' }, '2.0× means it came before twice as often as usual. It shows a link, not a cause, ' +
-      'and only works if you tap it every time, not just on bad days.'));
+    h('label', { class: 'field-label' }, 'Look at',
+      h('select', { onchange: ev => { precede.symptomId = ev.target.value; renderPatterns(); } },
+        withData.map(it => h('option', { value: it.id, selected: it.id === sym.id }, it.name)))),
+    h('label', { class: 'field-label' }, 'Count a thing if it was logged',
+      h('select', { onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
+        WINDOW_LABELS.map(([v, l]) => h('option', { value: v, selected: v === w }, l)))),
+    h('p', { class: 'hint' }, `Each thing is compared only over the days since you first logged it.`),
+    rows.map(r => h('div', { class: 'precede-row' },
+      h('div', { class: 'precede-head' }, h('strong', {}, r.it.name), h('span', { class: `verdict ${r.verdict[0]}` }, r.verdict[1])),
+      h('p', { class: 'precede-text' }, sentence(r)),
+      r.n > 0 && h('p', { class: 'meta' }, expectedText(r.expected)))),
+    summary && h('div', { class: 'doctor' },
+      h('strong', {}, 'For your doctor'),
+      h('p', { class: 'doctor-note' }, summary),
+      h('button', { class: 'secondary small', onclick: copy }, 'Copy summary')),
+    h('p', { class: 'hint' }, 'A link is not a cause. It only works if you tap each thing every time it happens, not just on bad days.'));
 }
 
 /* ---------- Settings view ---------- */

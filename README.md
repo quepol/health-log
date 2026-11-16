@@ -26,9 +26,9 @@ The app has two ideas:
 - **History:** every entry, newest first. Tap a row to open and edit it (the pencil does the same); the trash deletes it right there, with Undo.
 - **Patterns:**
   - Days this month and last month, and bar charts of days (not taps) by week, month or year.
-  - **What tends to come before it?** compares what you track against each other. It sits near the top once there's enough data to mean something.
   - Episodes for anything that lasts several days, with dates listed for multi-day episodes.
   - The most common factors for each thing you track.
+  - **What tends to come before it?** at the bottom compares what you track against each other, in plain sentences (see below).
 - **Settings:**
   - **What you track** and **Factors**: rename and reorder. Adding a factor of more than three words asks first (add it anyway, or shorten it).
   - **Hide**: takes it off the Log screen and Patterns; past entries stay. Hidden ones move to the bottom of the list.
@@ -47,7 +47,11 @@ Days in a row count as one **episode**. A 5-day flare is one episode, not five s
 
 ### Factors or a button?
 
-Factors only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time, even on good days. **What tends to come before it?** then compares: `2.0×` means it came before twice as often as usual. It shows a link, not a cause, and needs a few weeks of data.
+Factors only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time it happens, even on good days. **What tends to come before it?** then reads, for each thing: "Since Oct 7, 2 of 3 Headache episodes had Up too late logged the same day or the day before. About 1.8 would be expected by chance."
+- **Each thing is compared only since you first logged it.** Days before that aren't counted as "without it", which would make a newly tracked thing look more telling than it is.
+- **A plain verdict:** with fewer than 5 episodes it says **Too soon to tell**; after that, **Looks linked**, **Might be linked** or **No clear link**. A link shows up together, not that one causes the other, and needs a few weeks of data.
+- **For your doctor:** a short written summary of the same facts, with a **Copy summary** button.
+- **The window** (the same day, or up to 5 days before) can be changed; use a longer one for slow-onset things.
 
 ## Install on iPhone
 
