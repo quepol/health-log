@@ -643,8 +643,29 @@ function itemCard(it, entries) {
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
           h('li', {}, `${tagById(id).name}: ${n} of ${plural(entries.length, 'log')} (${Math.round((n / entries.length) * 100)}%)`)))
-      : h('p', { class: 'hint' }, 'No factors yet.'));
+      : h('p', { class: 'hint' }, 'No factors yet.'),
+    notesLink(it, entries));
 }
+
+// "Show notes (N)" at the bottom of a card, only when that thing has notes. The notes open in a
+// sheet from the bottom of the screen, newest first.
+const notesOf = entries => entries.filter(e => e.note && e.note.trim()).sort(byNewest);
+function notesLink(it, entries) {
+  const n = notesOf(entries).length;
+  return n ? h('button', { class: 'link-btn show-notes', onclick: () => openNotes(it) }, `Show notes (${n})`) : null;
+}
+function openNotes(it) {
+  const notes = notesOf(db.entries.filter(e => e.itemId === it.id));
+  $('#notes-title').textContent = `Notes · ${it.name}`;
+  $('#notes-list').replaceChildren(...notes.map(e => h('li', {},
+    h('time', { datetime: e.ts }, fmtWhen(e, true)),
+    h('p', {}, e.note))));
+  $('#notes-sheet').showModal();
+  $('#notes-list').scrollTop = 0; // the list is what scrolls
+}
+$('#notes-close').addEventListener('click', () => $('#notes-sheet').close());
+// A tap on the dimmed area (the dialog itself, outside its body) closes it too.
+$('#notes-sheet').addEventListener('click', ev => { if (ev.target === ev.currentTarget) ev.currentTarget.close(); });
 
 const median = xs => {
   const s = [...xs].sort((a, b) => a - b), m = s.length >> 1;

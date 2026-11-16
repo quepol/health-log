@@ -27,7 +27,7 @@ The app has two ideas:
 - **Patterns:**
   - Days this month and last month, and bar charts of days (not taps) by week, month or year.
   - Episodes for anything that lasts several days, with dates listed for multi-day episodes.
-  - The most common factors for each thing you track.
+  - The most common factors for each thing you track, and **Show notes** at the bottom of a card (when it has notes): a sheet from the bottom with all of that thing's notes, newest first.
   - **What tends to come before it?** at the bottom compares what you track against each other, in plain sentences (see below).
 - **Settings:**
   - **What you track** and **Factors**: rename and reorder. Adding a factor of more than three words asks first (add it anyway, or shorten it).

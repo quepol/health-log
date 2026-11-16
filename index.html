@@ -166,6 +166,17 @@
     <button data-view="settings"><span aria-hidden="true">⚙︎</span>Settings</button>
   </nav>
 
+  <!-- Notes for one thing, as a sheet that slides up from the bottom (Patterns → Show notes). -->
+  <dialog id="notes-sheet" class="sheet" aria-labelledby="notes-title">
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h2 id="notes-title"></h2>
+        <button type="button" id="notes-close" class="icon-btn" aria-label="Close notes">&times;</button>
+      </div>
+      <ul id="notes-list" class="notes-list"></ul>
+    </div>
+  </dialog>
+
   <dialog id="edit">
     <form method="dialog">
       <h2 id="edit-title" tabindex="-1">Edit entry</h2>
