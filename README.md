@@ -19,7 +19,7 @@ The app has two ideas:
   - Opened inside another app's built-in browser (a link tapped in Instagram, Facebook, Gmail...), a note above setup says to open the page in Safari or Chrome first: those browsers can't install apps and may not keep data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
-  - Then tap any possible factors that apply, or add one in a few words. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter factors (Stress, Poor sleep) are ready as choices. A long entry (more than about four words) is checked first: add it anyway, shorten it, or save it as a note on that log instead.
+  - Then tap any possible factors that apply, or add one in a couple of words. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter factors (Stress, Poor sleep) are ready as choices. A long entry (more than three words) is checked first: add it anyway, shorten it, or save it as a note on that log instead.
   - Tapping the same button again within 10 minutes asks first ("Headache again? You logged it 2 minutes ago."), since a quick second tap is usually a slip.
   - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
   - **＋ Add new** adds a button. **+ Add past entry** backdates one.

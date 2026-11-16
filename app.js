@@ -235,9 +235,9 @@ function logNow(itemId, confirmed) {
 // "+ Add" chip that opens an input in place. The detail is saved to the list straight away
 // (a hidden one with that name comes back) and handed to onAdd. Not a <form>: the edit sheet
 // is already one, so Enter is handled here rather than submitting the sheet.
-// Factors work best as a few words you can tap again, so a long entry is checked first: add it
+// Factors work best as a couple of words you can tap again, so a long entry is checked first: add it
 // anyway, shorten it, or save it as a note on this log instead (onNote; without it, no check).
-const looksLikeSentence = v => v.split(/\s+/).length > 4 || v.length > 32;
+const looksLikeSentence = v => v.split(/\s+/).length > 3; // 4+ words
 
 function detailInput(onAdd, onNote) {
   const input = h('input', { placeholder: 'e.g. Long drive', 'aria-label': 'New factor', autocomplete: 'off', enterkeyhint: 'done' });
@@ -306,8 +306,8 @@ function renderTagRow() {
       save();
     })),
     firstTime ? detailInput(onAdd, onNote)[0] : addDetailChip(onAdd, onNote),
-    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything that might be connected, in a few words: stress, ' +
-      'poor sleep, a late meal. Tap one to reuse it next time. Patterns shows which come up most.'),
+    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything that might be connected, in a couple of words: stress, ' +
+      'poor sleep, a late meal. Add one to reuse it next time. Patterns shows which come up most.'),
   ].filter(Boolean));
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; againAsk = null; renderTagRow(); renderGapAsk(); renderAgainAsk(); };
