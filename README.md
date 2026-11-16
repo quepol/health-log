@@ -47,7 +47,7 @@ Days in a row count as one **episode**. A 5-day flare is one episode, not five s
 
 ### Factors or a button?
 
-Factors only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time it happens, even on good days. **What tends to come before it?** then reads, for each thing: "Since Oct 7, 2 of 3 Headache episodes (67%) had Up too late logged the same day or the day before. That's true on about 60% of days overall." If a thing comes before your episodes much more often than it shows up on ordinary days, it may be linked.
+Factors only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time it happens, even on good days. **What tends to come before it?** then shows, for each thing, two percentages: how often it was logged before your episodes (say 67%, 2 of 3) and how often it shows up on any ordinary day (say about 60%). If the first is much higher than the second, it may be linked.
 - **Each thing is compared only since you first logged it.** Days before that aren't counted as "without it", which would make a newly tracked thing look more telling than it is.
 - **A plain verdict:** with fewer than 5 episodes it says **Too soon to tell**; after that, **Looks linked**, **Might be linked** or **No clear link**. A link shows up together, not that one causes the other, and needs a few weeks of data.
 - **For your doctor:** a short written summary of the same facts, with a **Copy summary** button.
