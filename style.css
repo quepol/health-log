@@ -148,11 +148,10 @@ body.installing main { padding-top: calc(env(safe-area-inset-top) + 1rem); }
 .grid {
   display: grid; gap: .75rem;
   /* At least two across on a phone (a column never needs more than half the width), more on wide
-   * screens. app.js switches to .one-col only when a word no longer fits in a half-width button. */
+   * screens. app.js gives a button a full row only when a word in its name no longer fits in a normal-width one. */
   grid-template-columns: repeat(auto-fill, minmax(min(9.5rem, calc(50% - .375rem)), 1fr));
 }
-.grid.one-col { grid-template-columns: 1fr; }
-.grid.one-col .log-btn { overflow-wrap: anywhere; } /* last resort for a very long word */
+.log-btn.wide { grid-column: 1 / -1; overflow-wrap: anywhere; } /* a long name takes a full row (see fitGrid) */
 .log-btn {
   min-width: 0; min-height: 7rem; padding: .75rem .4rem;
   display: flex; flex-direction: column; justify-content: center; gap: .25rem;
