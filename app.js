@@ -771,7 +771,7 @@ function precedeCard(items) {
 
   // A short note to read out or paste to a doctor: the same facts, in one place.
   const lines = rows.filter(r => r.n).slice(0, 3).map(r =>
-    `${r.it.name} came before ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%), compared with ${dayPct(r.p)} of all days (counted since ${fmt(r.from)}).`);
+    `${r.it.name}: came before ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%). Logged in total on ${dayPct(r.p)} of days since ${fmt(r.from)}.`);
   const anySmall = rows.some(r => r.n && r.n < 5);
   const summary = lines.length ? [`${sym.name} and what came before it (from Health Log).`,
     `A thing counts as "before" if it was logged ${windowTail(w)}.`, '', ...lines, '',

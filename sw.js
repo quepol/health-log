@@ -1,6 +1,6 @@
 // Offline support: serve the app shell from cache, refresh it in the background.
 // Bump VERSION with every release: a changed sw.js is how the app notices an update.
-const VERSION = 'v55';
+const VERSION = 'v56';
 const CACHE = `healthlog-${VERSION}`;
 const FILES = ['./', 'index.html', 'style.css', 'theme.js', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png'];
