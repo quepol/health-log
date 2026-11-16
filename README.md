@@ -9,7 +9,7 @@ Your data stays on your phone: no account, no analytics, and the app can't send 
 The app has two ideas:
 
 - **Things you track** are buttons on the Log screen. Tap one when it happens. They can be symptoms (Headache), habits (Exercise), or anything else.
-- **Details** note what else was going on when you log something, like Stress or Poor sleep. They're optional and attach to that one log.
+- **Factors** are short notes on what else might be connected when you log something, like Stress or Poor sleep. They're optional and attach to that one log.
 
 ### Screens
 
@@ -19,7 +19,7 @@ The app has two ideas:
   - Opened inside another app's built-in browser (a link tapped in Instagram, Facebook, Gmail...), a note above setup says to open the page in Safari or Chrome first: those browsers can't install apps and may not keep data.
 - **Log:**
   - Tap a button to log it with the current time. A message confirms it with **Undo** and **Edit**.
-  - Then tap any details that apply, or add one. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter details (Stress, Poor sleep) are ready as choices.
+  - Then tap any possible factors that apply, or add one in a couple of words. **Done** puts the box away. The first time, the box opens with a text field and a short explanation; starter factors (Stress, Poor sleep) are ready as choices. A long entry (more than three words) is checked first: add it anyway, shorten it, or save it as a note on that log instead.
   - Tapping the same button again within 10 minutes asks first ("Headache again? You logged it 2 minutes ago."), since a quick second tap is usually a slip.
   - Each button shows how many days you've logged it this month, or "Day 3 · tap for today" during a run of days.
   - **＋ Add new** adds a button. **+ Add past entry** backdates one.
@@ -28,9 +28,9 @@ The app has two ideas:
   - Days this month and last month, and bar charts of days (not taps) by week, month or year.
   - **What tends to come before it?** compares what you track against each other. It sits near the top once there's enough data to mean something.
   - Episodes for anything that lasts several days, with dates listed for multi-day episodes.
-  - The most common details for each thing you track.
+  - The most common factors for each thing you track.
 - **Settings:**
-  - **What you track** and **Details**: rename and reorder.
+  - **What you track** and **Factors**: rename and reorder.
   - **Hide**: takes it off the Log screen and Patterns; past entries stay. Hidden ones move to the bottom of the list.
   - **Merge**: rename one to match another (Headaches → Headache).
   - **Delete**: on hidden rows only.
@@ -45,9 +45,9 @@ Days in a row count as one **episode**. A 5-day flare is one episode, not five s
 - **Tap it each day it's there.** Extra taps on the same day are fine.
 - **Missed a day or two?** The app asks if it was still there. **Yes** fills the gap; **No** keeps them separate. It stops asking for things that usually last a day, like headaches.
 
-### Details or a button?
+### Factors or a button?
 
-Details only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time, even on good days. **What tends to come before it?** then compares: `2.0×` means it came before twice as often as usual. It shows a link, not a cause, and needs a few weeks of data.
+Factors only show what comes up most often. To test whether something comes *before* a symptom, such as a late meal, make it a button and tap it every time, even on good days. **What tends to come before it?** then compares: `2.0×` means it came before twice as often as usual. It shows a link, not a cause, and needs a few weeks of data.
 
 ## Install on iPhone
 
@@ -66,7 +66,7 @@ Data lives only on the device, and browsers can clear website storage. Home Scre
 - **Import:** in Settings, the app first shows how many entries are new and adds nothing until you confirm. Importing the same file twice won't create duplicates. Importing an older backup brings back anything you've deleted since.
 
 **CSV format:** `timestamp,item,tags,note`.
-- `item` is the thing you tracked, and `tags` are its details, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.
+- `item` is the thing you tracked, and `tags` are its factors, separated by `;`. The column names are unchanged from earlier versions, so older backups still import.
 - Timestamps look like `2026-10-06T14:32:00+01:00`. A plain `2026-10-06 14:32` also works and is read as the device's local time.
 
 ## Share a link

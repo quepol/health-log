@@ -235,24 +235,44 @@ function logNow(itemId, confirmed) {
 // "+ Add" chip that opens an input in place. The detail is saved to the list straight away
 // (a hidden one with that name comes back) and handed to onAdd. Not a <form>: the edit sheet
 // is already one, so Enter is handled here rather than submitting the sheet.
-function detailInput(onAdd) {
-  const input = h('input', { placeholder: 'e.g. Ate late', 'aria-label': 'New detail', autocomplete: 'off', enterkeyhint: 'done' });
-  const submit = () => {
-    const v = cleanName(input.value);
-    if (!v) return input.focus();
+// Factors work best as a couple of words you can tap again, so a long entry is checked first: add it
+// anyway, shorten it, or save it as a note on this log instead (onNote; without it, no check).
+const looksLikeSentence = v => v.split(/\s+/).length > 3; // 4+ words
+
+function detailInput(onAdd, onNote) {
+  const input = h('input', { placeholder: 'e.g. Long drive', 'aria-label': 'New factor', autocomplete: 'off', enterkeyhint: 'done' });
+  const nudge = h('div', { class: 'nudge', role: 'status', hidden: true });
+  const add = v => {
     let t = db.tags.find(x => x.name.toLowerCase() === v.toLowerCase());
     if (t) t.archived = false; else db.tags.push(t = named(v));
     save();
     onAdd(t);
   };
+  const submit = () => {
+    const v = cleanName(input.value);
+    if (!v) return input.focus();
+    if (onNote && looksLikeSentence(v) && !db.tags.some(x => x.name.toLowerCase() === v.toLowerCase())) {
+      nudge.hidden = false;
+      nudge.replaceChildren(
+        h('p', {}, 'That’s long for a factor. Short ones are easier to reuse.'),
+        h('div', { class: 'row' },
+          h('button', { type: 'button', class: 'secondary small', onclick: () => add(v) }, 'Add as factor'),
+          h('button', { type: 'button', class: 'primary small', onclick: () => onNote(v) }, 'Save as note instead')));
+      return;
+    }
+    add(v);
+  };
   input.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); submit(); } });
-  return [h('div', { class: 'add-row' }, input, h('button', { type: 'button', class: 'primary', onclick: submit }, 'Add')), input];
+  input.addEventListener('input', () => { nudge.hidden = true; });
+  const wrap = h('div', { class: 'add-wrap' },
+    h('div', { class: 'add-row' }, input, h('button', { type: 'button', class: 'primary', onclick: submit }, 'Add')), nudge);
+  return [wrap, input];
 }
 
-function addDetailChip(onAdd) {
+function addDetailChip(onAdd, onNote) {
   const add = h('button', { type: 'button', class: 'chip add-chip' }, '+ Add');
   add.addEventListener('click', () => {
-    const [row, input] = detailInput(onAdd);
+    const [row, input] = detailInput(onAdd, onNote);
     add.replaceWith(row);
     input.focus();
   });
@@ -266,11 +286,17 @@ function renderTagRow() {
   const e = entryById(lastLoggedId);
   $('#tagrow').hidden = !e;
   if (!e) return;
-  $('#tagrow-label').textContent = 'What else was going on?';
+  $('#tagrow-label').textContent = 'Possible factors';
   const onAdd = t => {
     if (!e.tagIds.includes(t.id)) e.tagIds.push(t.id);
     save();
     renderAll();
+  };
+  const onNote = text => {
+    e.note = e.note ? `${e.note} · ${text}` : text;
+    save();
+    renderAll();
+    toast('Saved as a note on this log');
   };
   // Their very first log: open the text box (no tap on "+ Add" needed) and explain details once.
   const firstTime = db.entries.length === 1;
@@ -279,9 +305,9 @@ function renderTagRow() {
       e.tagIds = on ? [...e.tagIds, t.id] : e.tagIds.filter(id => id !== t.id);
       save();
     })),
-    firstTime ? detailInput(onAdd)[0] : addDetailChip(onAdd),
-    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything you think might be connected — stress, ' +
-      'poor sleep, a late meal. Patterns shows which ones come up most.'),
+    firstTime ? detailInput(onAdd, onNote)[0] : addDetailChip(onAdd, onNote),
+    firstTime && h('p', { class: 'hint tagrow-hint' }, 'Anything that might be connected, in a couple of words: stress, ' +
+      'poor sleep, a late meal. Add one to reuse it next time. Patterns shows which come up most.'),
   ].filter(Boolean));
 }
 const dismissTagRow = () => { lastLoggedId = null; gapAsk = null; againAsk = null; renderTagRow(); renderGapAsk(); renderAgainAsk(); };
@@ -365,7 +391,8 @@ function openEdit(id) {
 function renderEditTags() {
   $('#f-tags').replaceChildren(...db.tags.filter(t => !t.archived || editTags.has(t.id))
     .map(t => chip(t.name, editTags.has(t.id), on => on ? editTags.add(t.id) : editTags.delete(t.id))),
-    addDetailChip(t => { editTags.add(t.id); renderEditTags(); renderSettings(); renderTagRow(); }));
+    addDetailChip(t => { editTags.add(t.id); renderEditTags(); renderSettings(); renderTagRow(); },
+      text => { const ta = $('#f-note'); ta.value = ta.value ? `${ta.value}\n${text}` : text; renderEditTags(); ta.focus(); }));
 }
 
 $('#edit').addEventListener('close', () => {
@@ -607,11 +634,11 @@ function itemCard(it, entries) {
     h('h3', {}, nameLabel(it), ` · days per ${scale}`),
     bars,
     episodeSection(it),
-    h('strong', {}, 'Most common details'),
+    h('strong', {}, 'Most common factors'),
     top.length
       ? h('ol', { class: 'taglist' }, top.map(([id, n]) =>
           h('li', {}, `${tagById(id).name}: ${n} of ${plural(entries.length, 'log')} (${Math.round((n / entries.length) * 100)}%)`)))
-      : h('p', { class: 'hint' }, 'No details yet.'));
+      : h('p', { class: 'hint' }, 'No factors yet.'));
 }
 
 const median = xs => {
