@@ -37,7 +37,7 @@ The app has two ideas:
   - **Backup**: Export to a file, or Import from a file (it shows what's new before adding anything).
   - **Storage**: how many entries are on this phone, and Delete all data.
   - **Theme**: Auto (follow the phone), Dark or Light.
-  - At the bottom: the app's version and **Check for updates**.
+  - At the bottom: the app's version and **Check for updates**. The same line sits at the bottom of the Log screen.
 
 ### Episodes
 
