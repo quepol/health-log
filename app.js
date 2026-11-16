@@ -771,9 +771,10 @@ function precedeCard(items) {
 
   // A short note to read out or paste to a doctor: the same facts, in one place.
   const lines = rows.filter(r => r.n).slice(0, 3).map(r =>
-    `${r.it.name} was logged ${windowTail(w)} before ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%) since ${fmt(r.from)}. It was logged ${windowTail(w)} on ${dayPct(r.p)} of all days.`);
+    `${r.it.name} came before ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%), compared with ${dayPct(r.p)} of all days (counted since ${fmt(r.from)}).`);
   const anySmall = rows.some(r => r.n && r.n < 5);
-  const summary = lines.length ? [`${sym.name} and what came before it (from Health Log):`, ...lines,
+  const summary = lines.length ? [`${sym.name} and what came before it (from Health Log).`,
+    `A thing counts as "before" if it was logged ${windowTail(w)}.`, '', ...lines, '',
     anySmall ? 'That is too few episodes to be sure. A link would not prove a cause.' : 'A link would not prove a cause.'].join('\n') : '';
 
   const copy = async () => {
