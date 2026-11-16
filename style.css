@@ -353,7 +353,7 @@ dialog legend { padding: 0; margin-bottom: .3rem; }
 #view-log .add-past { align-self: flex-start; } /* stay left-aligned in the flex column */
 .app-footer { margin-top: 1.75rem; text-align: center; font-size: .8rem; line-height: 1.7; color: var(--muted); }
 /* On Log it sits at the bottom of the page, just above the tab bar (or after a long list). */
-#view-log .app-footer { margin-top: auto; padding-top: 1.5rem; margin-bottom: -.75rem; }
+#view-log .app-footer { margin-top: auto; padding-top: 1.5rem; margin-bottom: -1.6rem; }
 .app-footer .link-btn { margin: 0; min-height: 0; position: relative; color: var(--muted); font-weight: 400; text-decoration: underline; }
 .app-footer .link-btn::after { content: ''; position: absolute; inset: -.75rem -.5rem; } /* big tap area, normal line spacing */
 
