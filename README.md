@@ -30,7 +30,7 @@ The app has two ideas:
   - Episodes for anything that lasts several days, with dates listed for multi-day episodes.
   - The most common factors for each thing you track.
 - **Settings:**
-  - **What you track** and **Factors**: rename and reorder.
+  - **What you track** and **Factors**: rename and reorder. Adding a factor of more than three words asks first (add it anyway, or shorten it).
   - **Hide**: takes it off the Log screen and Patterns; past entries stay. Hidden ones move to the bottom of the list.
   - **Merge**: rename one to match another (Headaches → Headache).
   - **Delete**: on hidden rows only.
