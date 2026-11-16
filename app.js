@@ -731,8 +731,11 @@ function verdictOf(n, hit, chance) {
 const WINDOW_LABELS = [[0, 'The same day only'], [1, 'The same day or the day before'], [2, 'Same day or up to 2 days before'],
   [3, 'Same day or up to 3 days before'], [5, 'Same day or up to 5 days before']];
 const windowTail = w => w === 0 ? 'the same day' : w === 1 ? 'the same day or the day before' : `the same day or up to ${w} days before`;
-// How common something is on an ordinary day, as a plain percentage (rounded, since it's an estimate).
-const dayPct = p => p < 0.01 ? 'under 1%' : p >= 0.99 ? 'over 99%' : `about ${p >= 0.1 ? Math.round(p * 20) * 5 : Math.round(p * 100)}%`;
+const pctText = (a, b) => !b ? '' : a === 0 ? '0%' : a / b < 0.01 ? 'under 1%' : `${Math.round(100 * a / b)}%`;
+const dayWord = n => n === 1 ? 'day' : 'days';
+// Which days count as "with it": the day it was logged, plus the days after, as far as the window reaches.
+const withDays = w => w === 0 ? 'Days you logged it' : w === 1 ? 'Days you logged it, and the day after' : `Days you logged it, and the next ${w} days`;
+const withDaysInline = w => w === 0 ? 'you logged it' : w === 1 ? 'you logged it or the day after' : `you logged it or in the next ${w} days`;
 
 function precedeCard(items) {
   const withData = items.filter(it => db.entries.some(e => e.itemId === it.id));
@@ -764,17 +767,17 @@ function precedeCard(items) {
     for (let n = from; n <= t; n++) if (exposed(n)) covered++;
     const p = covered / (t - from + 1), n = episodes.length;
     const chance = n ? tailChance(hit, n, p) : 1;
-    return { it, from, n, hit, p, chance, verdict: verdictOf(n, hit, chance) };
+    return { it, from, n, hit, covered, other: t - from + 1 - covered, p, chance, verdict: verdictOf(n, hit, chance) };
   }).sort((a, b) => a.chance - b.chance || b.hit - a.hit);
 
-  const pctOf = r => Math.round(100 * r.hit / r.n);
-
-  // A short note to read out or paste to a doctor: the same facts, in one place.
-  const lines = rows.filter(r => r.n).slice(0, 3).map(r =>
-    `${r.it.name}: came before ${r.hit} of ${r.n} ${sym.name} ${r.n === 1 ? 'episode' : 'episodes'} (${pctOf(r)}%). Logged in total on ${dayPct(r.p)} of days since ${fmt(r.from)}.`);
+  const lines = rows.filter(r => r.n && r.covered).slice(0, 3).map(r => {
+    const rest = r.n - r.hit;
+    return `${r.it.name}: ${sym.name} started on ${r.hit} of the ${r.covered} ${dayWord(r.covered)} ${withDaysInline(w)} (${pctText(r.hit, r.covered)})`
+      + (r.other ? `, versus ${rest} of the other ${r.other} ${dayWord(r.other)} (${pctText(rest, r.other)}).` : '.')
+      + ` Counted since ${fmt(r.from)}.`;
+  });
   const anySmall = rows.some(r => r.n && r.n < 5);
-  const summary = lines.length ? [`${sym.name} and what came before it (from Health Log).`,
-    `A thing counts as "before" if it was logged ${windowTail(w)}.`, '', ...lines, '',
+  const summary = lines.length ? [`${sym.name} and what came before it (from Health Log).`, '', ...lines, '',
     anySmall ? 'That is too few episodes to be sure. A link would not prove a cause.' : 'A link would not prove a cause.'].join('\n') : '';
 
   const copy = async () => {
@@ -793,14 +796,15 @@ function precedeCard(items) {
     h('label', { class: 'field-label' }, 'Count a thing if it was logged',
       h('select', { onchange: ev => { precede.window = +ev.target.value; renderPatterns(); } },
         WINDOW_LABELS.map(([v, l]) => h('option', { value: v, selected: v === w }, l)))),
-    h('p', { class: 'hint' }, `A thing may be linked if the first percentage is much higher than the second. Each thing is compared only over the days since you first logged it.`),
+    h('p', { class: 'hint' }, `A thing may be linked if ${sym.name} starts much more often on the first line than on the second. Each thing is compared only over the days since you first logged it.`),
     rows.map(r => h('div', { class: 'precede-row' },
       h('div', { class: 'precede-head' }, h('strong', {}, r.it.name), h('span', { class: `verdict ${r.verdict[0]}` }, r.verdict[1])),
-      r.n > 0
-        ? [h('div', { class: 'stat' }, h('span', {}, `Before ${sym.name} episodes`), h('span', {}, h('b', {}, `${pctOf(r)}%`), ` (${r.hit} of ${r.n})`)),
-           h('div', { class: 'stat' }, h('span', {}, 'Logged in total'), h('span', {}, h('b', {}, dayPct(r.p)))),
+      r.n > 0 && r.covered > 0
+        ? [h('p', { class: 'meta' }, `${sym.name} started on:`),
+           h('div', { class: 'stat' }, h('span', {}, withDays(w)), h('span', {}, h('b', {}, pctText(r.hit, r.covered)), ` (${r.hit} of ${r.covered})`)),
+           r.other > 0 && h('div', { class: 'stat' }, h('span', {}, 'All other days'), h('span', {}, h('b', {}, pctText(r.n - r.hit, r.other)), ` (${r.n - r.hit} of ${r.other})`)),
            h('p', { class: 'meta' }, `Counted since ${fmt(r.from)}.`)]
-        : h('p', { class: 'precede-text' }, `Since ${fmt(r.from)} there haven’t been any ${sym.name} episodes to compare.`))),
+        : h('p', { class: 'precede-text' }, r.n === 0 ? `Since ${fmt(r.from)} there haven’t been any ${sym.name} episodes to compare.` : `Not logged since ${fmt(r.from)}, so there’s nothing to compare.`))),
     h('p', { class: 'hint' }, 'A link is not a cause. It only works if you tap each thing every time it happens, not just on bad days.'),
     summary && h('hr', { class: 'rule' }),
     summary && h('div', { class: 'doctor' },
