@@ -1269,12 +1269,15 @@ function showVersion() {
   if (!('caches' in window)) return;
   caches.keys().then(keys => {
     const v = Math.max(0, ...keys.map(k => +(/^healthlog-v(\d+)$/.exec(k)?.[1] || 0)));
-    $('#app-version').textContent = v ? `Health Log · version ${v}` : 'Health Log';
+    for (const el of document.querySelectorAll('.app-version')) el.textContent = v ? `Version ${v} · ` : '';
   }).catch(() => {});
 }
 
-$('#check-updates').addEventListener('click', async () => {
-  const btn = $('#check-updates'), status = $('#update-status');
+// Both footers (Log and Settings) share this: the link turns into the result in the same spot.
+document.addEventListener('click', async ev => {
+  const btn = ev.target.closest('.check-updates');
+  if (!btn) return;
+  const status = btn.parentElement.querySelector('.update-status');
   const say = text => { status.textContent = text; status.hidden = false; btn.hidden = true; };
   const reset = () => setTimeout(() => { status.hidden = true; btn.hidden = false; }, 4000);
   const reg = await navigator.serviceWorker?.getRegistration().catch(() => null);
