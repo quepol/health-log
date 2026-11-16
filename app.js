@@ -798,7 +798,7 @@ function precedeCard(items) {
       h('div', { class: 'precede-head' }, h('strong', {}, r.it.name), h('span', { class: `verdict ${r.verdict[0]}` }, r.verdict[1])),
       r.n > 0
         ? [h('div', { class: 'stat' }, h('span', {}, `Before ${sym.name} episodes`), h('span', {}, h('b', {}, `${pctOf(r)}%`), ` (${r.hit} of ${r.n})`)),
-           h('div', { class: 'stat' }, h('span', {}, 'On any ordinary day'), h('span', {}, h('b', {}, dayPct(r.p)))),
+           h('div', { class: 'stat' }, h('span', {}, 'Logged in total'), h('span', {}, h('b', {}, dayPct(r.p)))),
            h('p', { class: 'meta' }, `Counted since ${fmt(r.from)}.`)]
         : h('p', { class: 'precede-text' }, `Since ${fmt(r.from)} there haven’t been any ${sym.name} episodes to compare.`))),
     h('p', { class: 'hint' }, 'A link is not a cause. It only works if you tap each thing every time it happens, not just on bad days.'),
