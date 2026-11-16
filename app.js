@@ -860,21 +860,40 @@ function move(list, i, d) {
   save();
   renderAll();
 }
-function bindAdd(form, list, make) {
+// `checkLong`: ask before adding a name that looks like a sentence (used for factors).
+function bindAdd(form, list, make, checkLong = false) {
+  const nudge = checkLong ? h('div', { class: 'nudge', role: 'status', hidden: true }) : null;
+  if (nudge) {
+    form.after(nudge);
+    form.elements.name.addEventListener('input', () => { nudge.hidden = true; });
+  }
+  const add = v => {
+    const firstHidden = list.findIndex(x => x.archived); // new ones go above the hidden ones
+    list.splice(firstHidden < 0 ? list.length : firstHidden, 0, make(v));
+    save();
+    form.reset();
+    if (nudge) nudge.hidden = true;
+    renderAll();
+  };
   form.addEventListener('submit', ev => {
     ev.preventDefault();
     const v = cleanName(form.elements.name.value);
     if (!v) return;
     if (nameTaken(list, v)) return toast(`“${v}” is already here`);
-    const firstHidden = list.findIndex(x => x.archived); // new ones go above the hidden ones
-    list.splice(firstHidden < 0 ? list.length : firstHidden, 0, make(v));
-    save();
-    form.reset();
-    renderAll();
+    if (nudge && looksLikeSentence(v)) {
+      nudge.hidden = false;
+      nudge.replaceChildren(
+        h('p', {}, 'That’s long for a factor. Short ones are easier to reuse; longer thoughts fit better in a note when you log.'),
+        h('div', { class: 'row' },
+          h('button', { type: 'button', class: 'secondary small', onclick: () => add(v) }, 'Add as factor'),
+          h('button', { type: 'button', class: 'primary small', onclick: () => { nudge.hidden = true; form.elements.name.focus(); } }, 'Shorten it')));
+      return;
+    }
+    add(v);
   });
 }
 bindAdd($('#add-item'), db.items, named);
-bindAdd($('#add-tag'), db.tags, named);
+bindAdd($('#add-tag'), db.tags, named, true);
 
 const exportAge = () => db.lastExport ? Math.floor((Date.now() - Date.parse(db.lastExport)) / 864e5) : null;
 // Nag only once there's something worth losing: 30 days since the last export,
